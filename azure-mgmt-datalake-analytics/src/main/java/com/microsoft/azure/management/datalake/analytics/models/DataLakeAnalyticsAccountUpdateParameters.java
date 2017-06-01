@@ -9,6 +9,7 @@
 package com.microsoft.azure.management.datalake.analytics.models;
 
 import java.util.Map;
+import java.util.List;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.microsoft.rest.serializer.JsonFlatten;
 
@@ -21,6 +22,7 @@ public class DataLakeAnalyticsAccountUpdateParameters {
     /**
      * Resource tags.
      */
+    @JsonProperty(value = "tags")
     private Map<String, String> tags;
 
     /**
@@ -40,6 +42,56 @@ public class DataLakeAnalyticsAccountUpdateParameters {
      */
     @JsonProperty(value = "properties.maxJobCount")
     private Integer maxJobCount;
+
+    /**
+     * the commitment tier to use for next month. Possible values include:
+     * 'Consumption', 'Commitment_100AUHours', 'Commitment_500AUHours',
+     * 'Commitment_1000AUHours', 'Commitment_5000AUHours',
+     * 'Commitment_10000AUHours', 'Commitment_50000AUHours',
+     * 'Commitment_100000AUHours', 'Commitment_500000AUHours'.
+     */
+    @JsonProperty(value = "properties.newTier")
+    private TierType newTier;
+
+    /**
+     * The current state of the IP address firewall for this Data Lake
+     * Analytics account. Possible values include: 'Enabled', 'Disabled'.
+     */
+    @JsonProperty(value = "properties.firewallState")
+    private FirewallState firewallState;
+
+    /**
+     * The current state of allowing or disallowing IPs originating within
+     * Azure through the firewall. If the firewall is disabled, this is not
+     * enforced. Possible values include: 'Enabled', 'Disabled'.
+     */
+    @JsonProperty(value = "properties.firewallAllowAzureIps")
+    private FirewallAllowAzureIpsState firewallAllowAzureIps;
+
+    /**
+     * The list of firewall rules associated with this Data Lake Analytics
+     * account.
+     */
+    @JsonProperty(value = "properties.firewallRules")
+    private List<FirewallRule> firewallRules;
+
+    /**
+     * the maximum supported degree of parallelism per job for this account.
+     */
+    @JsonProperty(value = "properties.maxDegreeOfParallelismPerJob")
+    private Integer maxDegreeOfParallelismPerJob;
+
+    /**
+     * the minimum supported priority per job for this account.
+     */
+    @JsonProperty(value = "properties.minPriorityPerJob")
+    private Integer minPriorityPerJob;
+
+    /**
+     * the list of existing compute policies to update in this account.
+     */
+    @JsonProperty(value = "properties.computePolicies")
+    private List<ComputePolicy> computePolicies;
 
     /**
      * Get the tags value.
@@ -118,6 +170,146 @@ public class DataLakeAnalyticsAccountUpdateParameters {
      */
     public DataLakeAnalyticsAccountUpdateParameters withMaxJobCount(Integer maxJobCount) {
         this.maxJobCount = maxJobCount;
+        return this;
+    }
+
+    /**
+     * Get the newTier value.
+     *
+     * @return the newTier value
+     */
+    public TierType newTier() {
+        return this.newTier;
+    }
+
+    /**
+     * Set the newTier value.
+     *
+     * @param newTier the newTier value to set
+     * @return the DataLakeAnalyticsAccountUpdateParameters object itself.
+     */
+    public DataLakeAnalyticsAccountUpdateParameters withNewTier(TierType newTier) {
+        this.newTier = newTier;
+        return this;
+    }
+
+    /**
+     * Get the firewallState value.
+     *
+     * @return the firewallState value
+     */
+    public FirewallState firewallState() {
+        return this.firewallState;
+    }
+
+    /**
+     * Set the firewallState value.
+     *
+     * @param firewallState the firewallState value to set
+     * @return the DataLakeAnalyticsAccountUpdateParameters object itself.
+     */
+    public DataLakeAnalyticsAccountUpdateParameters withFirewallState(FirewallState firewallState) {
+        this.firewallState = firewallState;
+        return this;
+    }
+
+    /**
+     * Get the firewallAllowAzureIps value.
+     *
+     * @return the firewallAllowAzureIps value
+     */
+    public FirewallAllowAzureIpsState firewallAllowAzureIps() {
+        return this.firewallAllowAzureIps;
+    }
+
+    /**
+     * Set the firewallAllowAzureIps value.
+     *
+     * @param firewallAllowAzureIps the firewallAllowAzureIps value to set
+     * @return the DataLakeAnalyticsAccountUpdateParameters object itself.
+     */
+    public DataLakeAnalyticsAccountUpdateParameters withFirewallAllowAzureIps(FirewallAllowAzureIpsState firewallAllowAzureIps) {
+        this.firewallAllowAzureIps = firewallAllowAzureIps;
+        return this;
+    }
+
+    /**
+     * Get the firewallRules value.
+     *
+     * @return the firewallRules value
+     */
+    public List<FirewallRule> firewallRules() {
+        return this.firewallRules;
+    }
+
+    /**
+     * Set the firewallRules value.
+     *
+     * @param firewallRules the firewallRules value to set
+     * @return the DataLakeAnalyticsAccountUpdateParameters object itself.
+     */
+    public DataLakeAnalyticsAccountUpdateParameters withFirewallRules(List<FirewallRule> firewallRules) {
+        this.firewallRules = firewallRules;
+        return this;
+    }
+
+    /**
+     * Get the maxDegreeOfParallelismPerJob value.
+     *
+     * @return the maxDegreeOfParallelismPerJob value
+     */
+    public Integer maxDegreeOfParallelismPerJob() {
+        return this.maxDegreeOfParallelismPerJob;
+    }
+
+    /**
+     * Set the maxDegreeOfParallelismPerJob value.
+     *
+     * @param maxDegreeOfParallelismPerJob the maxDegreeOfParallelismPerJob value to set
+     * @return the DataLakeAnalyticsAccountUpdateParameters object itself.
+     */
+    public DataLakeAnalyticsAccountUpdateParameters withMaxDegreeOfParallelismPerJob(Integer maxDegreeOfParallelismPerJob) {
+        this.maxDegreeOfParallelismPerJob = maxDegreeOfParallelismPerJob;
+        return this;
+    }
+
+    /**
+     * Get the minPriorityPerJob value.
+     *
+     * @return the minPriorityPerJob value
+     */
+    public Integer minPriorityPerJob() {
+        return this.minPriorityPerJob;
+    }
+
+    /**
+     * Set the minPriorityPerJob value.
+     *
+     * @param minPriorityPerJob the minPriorityPerJob value to set
+     * @return the DataLakeAnalyticsAccountUpdateParameters object itself.
+     */
+    public DataLakeAnalyticsAccountUpdateParameters withMinPriorityPerJob(Integer minPriorityPerJob) {
+        this.minPriorityPerJob = minPriorityPerJob;
+        return this;
+    }
+
+    /**
+     * Get the computePolicies value.
+     *
+     * @return the computePolicies value
+     */
+    public List<ComputePolicy> computePolicies() {
+        return this.computePolicies;
+    }
+
+    /**
+     * Set the computePolicies value.
+     *
+     * @param computePolicies the computePolicies value to set
+     * @return the DataLakeAnalyticsAccountUpdateParameters object itself.
+     */
+    public DataLakeAnalyticsAccountUpdateParameters withComputePolicies(List<ComputePolicy> computePolicies) {
+        this.computePolicies = computePolicies;
         return this;
     }
 

@@ -8,13 +8,19 @@ package com.microsoft.azure.management.resources.fluentcore.arm.models;
 
 import com.microsoft.azure.management.apigeneration.Fluent;
 import com.microsoft.azure.management.resources.fluentcore.model.Creatable;
+import com.microsoft.azure.management.resources.fluentcore.model.Indexable;
 
 /**
  * Interface for the child resource which can be CRUDed independently from the parent resource.
+ * @param <ManagerT> the client manager type representing the service
  */
 @Fluent
-public interface IndependentChild
-        extends HasName, HasId, HasResourceGroup {
+public interface IndependentChild<ManagerT> extends
+    HasName,
+    HasId,
+    Indexable,
+    HasResourceGroup,
+    HasManager<ManagerT> {
 
     /**
      * Grouping of all the definition stages.

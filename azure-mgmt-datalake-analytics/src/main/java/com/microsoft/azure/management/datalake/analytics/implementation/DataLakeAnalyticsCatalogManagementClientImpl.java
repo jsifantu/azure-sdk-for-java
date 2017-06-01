@@ -12,13 +12,13 @@ import com.microsoft.azure.AzureClient;
 import com.microsoft.azure.AzureServiceClient;
 import com.microsoft.azure.management.datalake.analytics.Catalogs;
 import com.microsoft.azure.management.datalake.analytics.DataLakeAnalyticsCatalogManagementClient;
-import com.microsoft.azure.RestClient;
 import com.microsoft.rest.credentials.ServiceClientCredentials;
+import com.microsoft.rest.RestClient;
 
 /**
  * Initializes a new instance of the DataLakeAnalyticsCatalogManagementClientImpl class.
  */
-public final class DataLakeAnalyticsCatalogManagementClientImpl extends AzureServiceClient implements DataLakeAnalyticsCatalogManagementClient {
+public class DataLakeAnalyticsCatalogManagementClientImpl extends AzureServiceClient implements DataLakeAnalyticsCatalogManagementClient {
     /** the {@link AzureClient} used for long running operations. */
     private AzureClient azureClient;
 
@@ -163,10 +163,8 @@ public final class DataLakeAnalyticsCatalogManagementClientImpl extends AzureSer
      * @param credentials the management credentials for Azure
      */
     private DataLakeAnalyticsCatalogManagementClientImpl(String baseUrl, ServiceClientCredentials credentials) {
-        this(new RestClient.Builder()
-                .withBaseUrl(baseUrl)
-                .withCredentials(credentials)
-                .build());
+        super(baseUrl, credentials);
+        initialize();
     }
 
     /**
@@ -196,8 +194,6 @@ public final class DataLakeAnalyticsCatalogManagementClientImpl extends AzureSer
      */
     @Override
     public String userAgent() {
-        return String.format("Azure-SDK-For-Java/%s (%s)",
-                getClass().getPackage().getImplementationVersion(),
-                "DataLakeAnalyticsCatalogManagementClient, 2016-11-01");
+        return String.format("%s (%s, %s)", super.userAgent(), "DataLakeAnalyticsCatalogManagementClient", "2016-11-01");
     }
 }

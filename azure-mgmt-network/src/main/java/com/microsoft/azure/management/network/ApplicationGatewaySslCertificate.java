@@ -6,20 +6,21 @@
 package com.microsoft.azure.management.network;
 
 import java.io.File;
+import java.io.IOException;
 
 import com.microsoft.azure.management.apigeneration.Fluent;
 import com.microsoft.azure.management.network.implementation.ApplicationGatewaySslCertificateInner;
 import com.microsoft.azure.management.resources.fluentcore.arm.models.ChildResource;
 import com.microsoft.azure.management.resources.fluentcore.model.Attachable;
 import com.microsoft.azure.management.resources.fluentcore.model.Settable;
-import com.microsoft.azure.management.resources.fluentcore.model.Wrapper;
+import com.microsoft.azure.management.resources.fluentcore.model.HasInner;
 
 /**
- * An immutable client-side representation of an application gateway SSL certificate.
+ * A client-side representation of an application gateway SSL certificate.
  */
 @Fluent()
 public interface ApplicationGatewaySslCertificate extends
-    Wrapper<ApplicationGatewaySslCertificateInner>,
+    HasInner<ApplicationGatewaySslCertificateInner>,
     ChildResource<ApplicationGateway> {
 
     /**
@@ -58,14 +59,15 @@ public interface ApplicationGatewaySslCertificate extends
              * @param pfxData the contents of the private key in the PFX format
              * @return the next stage of the definition
              */
-            WithPassword<ParentT> withPfxContent(byte[] pfxData);
+            WithPassword<ParentT> withPfxFromBytes(byte[] pfxData);
 
             /**
              * Specifies the PFX (PKCS#12) file to get the private key content from.
              * @param pfxFile a file in the PFX format
              * @return the next stage of the definition
+             * @throws java.io.IOException when there are problems with the provided file
              */
-            WithPassword<ParentT> withPfxFile(File pfxFile);
+            WithPassword<ParentT> withPfxFromFile(File pfxFile) throws IOException;
         }
 
         /**
@@ -78,7 +80,7 @@ public interface ApplicationGatewaySslCertificate extends
              * @param password a password
              * @return the next stage of the definition
              */
-            WithAttach<ParentT> withPassword(String password);
+            WithAttach<ParentT> withPfxPassword(String password);
         }
     }
 

@@ -1,8 +1,15 @@
+/**
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License. See License.txt in the project root for
+ * license information.
+ */
+
 package com.microsoft.azure.management.resources.childresource;
 
 import com.microsoft.azure.management.resources.fluentcore.arm.models.implementation.ExternalChildResourceImpl;
 import org.junit.Assert;
 import org.junit.Test;
+import rx.Observable;
 import rx.Observer;
 import rx.Subscriber;
 import rx.exceptions.CompositeException;
@@ -18,7 +25,7 @@ public class ExternalChildResourceTests {
         PulletsImpl pullets = chicken.pullets(); // Child resource collection
         final CountDownLatch monitor = new CountDownLatch(1);
         // Note that commitAsync() won't be exposed to the end-user as it's a part of child resource impl
-        // pullets.commitAsync will be called from (Applicable)chicken.applyAsync() or (Creatable)chicken.createAsync().
+        // pullets.commitAsync will be called from (Applicable)chicken.applyAsync() or (Creatable)chicken.createAsyncStreaming().
         //
         // Observable<Chicken> Chicken::ApplyAsync() {
         //      [1] update chicken
@@ -64,8 +71,7 @@ public class ExternalChildResourceTests {
         final CountDownLatch monitor = new CountDownLatch(1);
 
         PulletsImpl pullets = chicken.pullets();
-        pullets.commitAsync()
-                .subscribe(new Observer<PulletImpl>() {
+        pullets.commitAsync().subscribe(new Observer<PulletImpl>() {
                     @Override
                     public void onCompleted() {
                         monitor.countDown();

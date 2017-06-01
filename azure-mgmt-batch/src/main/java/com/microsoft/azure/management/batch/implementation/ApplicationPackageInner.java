@@ -10,6 +10,7 @@ package com.microsoft.azure.management.batch.implementation;
 
 import com.microsoft.azure.management.batch.PackageState;
 import org.joda.time.DateTime;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
  * An application package which represents a particular version of an
@@ -17,40 +18,47 @@ import org.joda.time.DateTime;
  */
 public class ApplicationPackageInner {
     /**
-     * The id of the application.
+     * The ID of the application.
      */
+    @JsonProperty(value = "id", access = JsonProperty.Access.WRITE_ONLY)
     private String id;
 
     /**
      * The version of the application package.
      */
+    @JsonProperty(value = "version", access = JsonProperty.Access.WRITE_ONLY)
     private String version;
 
     /**
      * The current state of the application package. Possible values include:
      * 'pending', 'active', 'unmapped'.
      */
+    @JsonProperty(value = "state", access = JsonProperty.Access.WRITE_ONLY)
     private PackageState state;
 
     /**
      * The format of the application package, if the package is active.
      */
+    @JsonProperty(value = "format", access = JsonProperty.Access.WRITE_ONLY)
     private String format;
 
     /**
-     * The storage URL at which the application package is stored.
+     * The URL for the application package in Azure Storage.
      */
+    @JsonProperty(value = "storageUrl", access = JsonProperty.Access.WRITE_ONLY)
     private String storageUrl;
 
     /**
-     * The UTC time at which the storage URL will expire.
+     * The UTC time at which the Azure Storage URL will expire.
      */
+    @JsonProperty(value = "storageUrlExpiry", access = JsonProperty.Access.WRITE_ONLY)
     private DateTime storageUrlExpiry;
 
     /**
      * The time at which the package was last activated, if the package is
      * active.
      */
+    @JsonProperty(value = "lastActivationTime", access = JsonProperty.Access.WRITE_ONLY)
     private DateTime lastActivationTime;
 
     /**
@@ -63,34 +71,12 @@ public class ApplicationPackageInner {
     }
 
     /**
-     * Set the id value.
-     *
-     * @param id the id value to set
-     * @return the ApplicationPackageInner object itself.
-     */
-    public ApplicationPackageInner withId(String id) {
-        this.id = id;
-        return this;
-    }
-
-    /**
      * Get the version value.
      *
      * @return the version value
      */
     public String version() {
         return this.version;
-    }
-
-    /**
-     * Set the version value.
-     *
-     * @param version the version value to set
-     * @return the ApplicationPackageInner object itself.
-     */
-    public ApplicationPackageInner withVersion(String version) {
-        this.version = version;
-        return this;
     }
 
     /**
@@ -103,34 +89,12 @@ public class ApplicationPackageInner {
     }
 
     /**
-     * Set the state value.
-     *
-     * @param state the state value to set
-     * @return the ApplicationPackageInner object itself.
-     */
-    public ApplicationPackageInner withState(PackageState state) {
-        this.state = state;
-        return this;
-    }
-
-    /**
      * Get the format value.
      *
      * @return the format value
      */
     public String format() {
         return this.format;
-    }
-
-    /**
-     * Set the format value.
-     *
-     * @param format the format value to set
-     * @return the ApplicationPackageInner object itself.
-     */
-    public ApplicationPackageInner withFormat(String format) {
-        this.format = format;
-        return this;
     }
 
     /**
@@ -143,17 +107,6 @@ public class ApplicationPackageInner {
     }
 
     /**
-     * Set the storageUrl value.
-     *
-     * @param storageUrl the storageUrl value to set
-     * @return the ApplicationPackageInner object itself.
-     */
-    public ApplicationPackageInner withStorageUrl(String storageUrl) {
-        this.storageUrl = storageUrl;
-        return this;
-    }
-
-    /**
      * Get the storageUrlExpiry value.
      *
      * @return the storageUrlExpiry value
@@ -163,34 +116,12 @@ public class ApplicationPackageInner {
     }
 
     /**
-     * Set the storageUrlExpiry value.
-     *
-     * @param storageUrlExpiry the storageUrlExpiry value to set
-     * @return the ApplicationPackageInner object itself.
-     */
-    public ApplicationPackageInner withStorageUrlExpiry(DateTime storageUrlExpiry) {
-        this.storageUrlExpiry = storageUrlExpiry;
-        return this;
-    }
-
-    /**
      * Get the lastActivationTime value.
      *
      * @return the lastActivationTime value
      */
     public DateTime lastActivationTime() {
         return this.lastActivationTime;
-    }
-
-    /**
-     * Set the lastActivationTime value.
-     *
-     * @param lastActivationTime the lastActivationTime value to set
-     * @return the ApplicationPackageInner object itself.
-     */
-    public ApplicationPackageInner withLastActivationTime(DateTime lastActivationTime) {
-        this.lastActivationTime = lastActivationTime;
-        return this;
     }
 
 }

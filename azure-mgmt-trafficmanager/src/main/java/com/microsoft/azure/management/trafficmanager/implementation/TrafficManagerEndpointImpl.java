@@ -8,6 +8,7 @@ package com.microsoft.azure.management.trafficmanager.implementation;
 import com.microsoft.azure.management.apigeneration.LangDefinition;
 import com.microsoft.azure.management.resources.fluentcore.arm.Region;
 import com.microsoft.azure.management.resources.fluentcore.arm.models.implementation.ExternalChildResourceImpl;
+import com.microsoft.azure.management.resources.fluentcore.utils.Utils;
 import com.microsoft.azure.management.trafficmanager.TrafficManagerEndpoint;
 import com.microsoft.azure.management.trafficmanager.EndpointMonitorStatus;
 import com.microsoft.azure.management.trafficmanager.TrafficManagerProfile;
@@ -62,13 +63,13 @@ class TrafficManagerEndpointImpl extends ExternalChildResourceImpl<TrafficManage
     }
 
     @Override
-    public int routingWeight() {
-        return this.inner().weight().intValue();
+    public long routingWeight() {
+        return Utils.toPrimitiveLong(this.inner().weight());
     }
 
     @Override
-    public int routingPriority() {
-        return this.inner().priority().intValue();
+    public long routingPriority() {
+        return Utils.toPrimitiveLong(this.inner().priority());
     }
 
     @Override
@@ -152,12 +153,7 @@ class TrafficManagerEndpointImpl extends ExternalChildResourceImpl<TrafficManage
         return this.client.deleteAsync(this.parent().resourceGroupName(),
                 this.parent().name(),
                 this.endpointType().localName(),
-                this.name()).map(new Func1<Void, Void>() {
-            @Override
-            public Void call(Void result) {
-                return result;
-            }
-        });
+                this.name());
     }
 
     @Override
@@ -166,12 +162,10 @@ class TrafficManagerEndpointImpl extends ExternalChildResourceImpl<TrafficManage
     }
 
     @Override
-    public TrafficManagerEndpointImpl refresh() {
-        EndpointInner inner = this.client.get(this.parent().resourceGroupName(),
+    protected Observable<EndpointInner> getInnerAsync() {
+        return this.client.getAsync(this.parent().resourceGroupName(),
                 this.parent().name(),
                 this.endpointType().toString(),
                 this.name());
-        this.setInner(inner);
-        return this;
     }
 }

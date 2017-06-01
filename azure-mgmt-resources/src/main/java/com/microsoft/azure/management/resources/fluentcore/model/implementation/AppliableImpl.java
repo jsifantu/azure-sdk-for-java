@@ -1,6 +1,13 @@
+/**
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License. See License.txt in the project root for
+ * license information.
+ */
+
 package com.microsoft.azure.management.resources.fluentcore.model.implementation;
 
 import com.microsoft.azure.management.resources.fluentcore.model.Appliable;
+import com.microsoft.azure.management.resources.fluentcore.model.Indexable;
 import com.microsoft.azure.management.resources.fluentcore.model.Updatable;
 import rx.Observable;
 
@@ -12,7 +19,7 @@ import rx.Observable;
  * @param <FluentModelImplT> the fluent model implementation type
  */
 public abstract class AppliableImpl<
-        FluentModelT,
+        FluentModelT  extends Indexable,
         InnerModelT,
         FluentModelImplT extends IndexableRefreshableWrapperImpl<FluentModelT, InnerModelT>>
     extends
@@ -31,7 +38,7 @@ public abstract class AppliableImpl<
     }
 
     @Override
-    public final Observable<FluentModelT> createAsync() {
+    public final Observable<Indexable> createAsync() {
         throw new IllegalStateException("Internal Error: createAsync cannot be called from UpdatableImpl");
     }
 

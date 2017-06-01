@@ -9,7 +9,7 @@
 package com.microsoft.azure.management.datalake.analytics;
 
 import com.microsoft.azure.AzureClient;
-import com.microsoft.azure.RestClient;
+import com.microsoft.rest.RestClient;
 
 /**
  * The interface for DataLakeAnalyticsAccountManagementClient class.
@@ -101,6 +101,18 @@ public interface DataLakeAnalyticsAccountManagementClient {
      * @return the service client itself
      */
     DataLakeAnalyticsAccountManagementClient withGenerateClientRequestId(boolean generateClientRequestId);
+
+    /**
+     * Gets the ComputePolicies object to access its operations.
+     * @return the ComputePolicies object.
+     */
+    ComputePolicies computePolicies();
+
+    /**
+     * Gets the FirewallRules object to access its operations.
+     * @return the FirewallRules object.
+     */
+    FirewallRules firewallRules();
 
     /**
      * Gets the StorageAccounts object to access its operations.

@@ -7,10 +7,12 @@
 package com.microsoft.azure.management.resources;
 
 import com.microsoft.azure.management.apigeneration.Fluent;
+import com.microsoft.azure.management.resources.fluentcore.arm.models.HasId;
 import com.microsoft.azure.management.resources.fluentcore.arm.models.HasName;
 import com.microsoft.azure.management.resources.fluentcore.model.Creatable;
+import com.microsoft.azure.management.resources.fluentcore.model.Indexable;
 import com.microsoft.azure.management.resources.fluentcore.model.Refreshable;
-import com.microsoft.azure.management.resources.fluentcore.model.Wrapper;
+import com.microsoft.azure.management.resources.fluentcore.model.HasInner;
 import com.microsoft.azure.management.resources.implementation.PolicyAssignmentInner;
 
 /**
@@ -19,8 +21,10 @@ import com.microsoft.azure.management.resources.implementation.PolicyAssignmentI
 @Fluent
 public interface PolicyAssignment extends
         HasName,
+        HasId,
+        Indexable,
         Refreshable<PolicyAssignment>,
-        Wrapper<PolicyAssignmentInner> {
+        HasInner<PolicyAssignmentInner> {
 
     /**
      * @return the policy assignment display name
@@ -36,11 +40,6 @@ public interface PolicyAssignment extends
      * @return the scope at which the policy assignment exists
      */
     String scope();
-
-    /**
-     * @return the Id of the policy assignment
-     */
-    String id();
 
     /**
      * @return the type of the policy assignment

@@ -10,13 +10,13 @@ package com.microsoft.azure.management.sql.implementation;
 
 import com.microsoft.azure.AzureClient;
 import com.microsoft.azure.AzureServiceClient;
-import com.microsoft.azure.RestClient;
 import com.microsoft.rest.credentials.ServiceClientCredentials;
+import com.microsoft.rest.RestClient;
 
 /**
  * Initializes a new instance of the SqlManagementClientImpl class.
  */
-public final class SqlManagementClientImpl extends AzureServiceClient {
+public class SqlManagementClientImpl extends AzureServiceClient {
     /** the {@link AzureClient} used for long running operations. */
     private AzureClient azureClient;
 
@@ -28,11 +28,11 @@ public final class SqlManagementClientImpl extends AzureServiceClient {
         return this.azureClient;
     }
 
-    /** The subscription id that identifies an Azure subscription. */
+    /** The subscription ID that identifies an Azure subscription. */
     private String subscriptionId;
 
     /**
-     * Gets The subscription id that identifies an Azure subscription.
+     * Gets The subscription ID that identifies an Azure subscription.
      *
      * @return the subscriptionId value.
      */
@@ -41,7 +41,7 @@ public final class SqlManagementClientImpl extends AzureServiceClient {
     }
 
     /**
-     * Sets The subscription id that identifies an Azure subscription.
+     * Sets The subscription ID that identifies an Azure subscription.
      *
      * @param subscriptionId the subscriptionId value.
      * @return the service client itself
@@ -188,10 +188,8 @@ public final class SqlManagementClientImpl extends AzureServiceClient {
      * @param credentials the management credentials for Azure
      */
     public SqlManagementClientImpl(String baseUrl, ServiceClientCredentials credentials) {
-        this(new RestClient.Builder()
-                .withBaseUrl(baseUrl)
-                .withCredentials(credentials)
-                .build());
+        super(baseUrl, credentials);
+        initialize();
     }
 
     /**
@@ -222,8 +220,6 @@ public final class SqlManagementClientImpl extends AzureServiceClient {
      */
     @Override
     public String userAgent() {
-        return String.format("Azure-SDK-For-Java/%s (%s)",
-                getClass().getPackage().getImplementationVersion(),
-                "SqlManagementClient, ");
+        return String.format("%s (%s)", super.userAgent(), "SqlManagementClient");
     }
 }

@@ -20,6 +20,7 @@ public class DataLakeStoreAccountUpdateParameters {
     /**
      * Resource tags.
      */
+    @JsonProperty(value = "tags")
     private Map<String, String> tags;
 
     /**
@@ -32,11 +33,10 @@ public class DataLakeStoreAccountUpdateParameters {
     private FirewallState firewallState;
 
     /**
-     * The current state of the trusted identity provider feature for this
-     * Data Lake store account. Disabling trusted identity provider
-     * functionality does not remove the providers, they will just be ignored
-     * until this feature is re-enabled. Possible values include: 'Enabled',
-     * 'Disabled'.
+     * The current state of the trusted identity provider feature for this Data
+     * Lake store account. Disabling trusted identity provider functionality
+     * does not remove the providers, they will just be ignored until this
+     * feature is re-enabled. Possible values include: 'Enabled', 'Disabled'.
      */
     @JsonProperty(value = "properties.trustedIdProviderState")
     private TrustedIdProviderState trustedIdProviderState;
@@ -47,6 +47,29 @@ public class DataLakeStoreAccountUpdateParameters {
      */
     @JsonProperty(value = "properties.defaultGroup")
     private String defaultGroup;
+
+    /**
+     * the commitment tier to use for next month. Possible values include:
+     * 'Consumption', 'Commitment_1TB', 'Commitment_10TB', 'Commitment_100TB',
+     * 'Commitment_500TB', 'Commitment_1PB', 'Commitment_5PB'.
+     */
+    @JsonProperty(value = "properties.newTier")
+    private TierType newTier;
+
+    /**
+     * The current state of allowing or disallowing IPs originating within
+     * Azure through the firewall. If the firewall is disabled, this is not
+     * enforced. Possible values include: 'Enabled', 'Disabled'.
+     */
+    @JsonProperty(value = "properties.firewallAllowAzureIps")
+    private FirewallAllowAzureIpsState firewallAllowAzureIps;
+
+    /**
+     * Used for rotation of user managed Key Vault keys. Can only be used to
+     * rotate a user managed encryption Key Vault key.
+     */
+    @JsonProperty(value = "properties.encryptionConfig")
+    private UpdateEncryptionConfig encryptionConfig;
 
     /**
      * Get the tags value.
@@ -125,6 +148,66 @@ public class DataLakeStoreAccountUpdateParameters {
      */
     public DataLakeStoreAccountUpdateParameters withDefaultGroup(String defaultGroup) {
         this.defaultGroup = defaultGroup;
+        return this;
+    }
+
+    /**
+     * Get the newTier value.
+     *
+     * @return the newTier value
+     */
+    public TierType newTier() {
+        return this.newTier;
+    }
+
+    /**
+     * Set the newTier value.
+     *
+     * @param newTier the newTier value to set
+     * @return the DataLakeStoreAccountUpdateParameters object itself.
+     */
+    public DataLakeStoreAccountUpdateParameters withNewTier(TierType newTier) {
+        this.newTier = newTier;
+        return this;
+    }
+
+    /**
+     * Get the firewallAllowAzureIps value.
+     *
+     * @return the firewallAllowAzureIps value
+     */
+    public FirewallAllowAzureIpsState firewallAllowAzureIps() {
+        return this.firewallAllowAzureIps;
+    }
+
+    /**
+     * Set the firewallAllowAzureIps value.
+     *
+     * @param firewallAllowAzureIps the firewallAllowAzureIps value to set
+     * @return the DataLakeStoreAccountUpdateParameters object itself.
+     */
+    public DataLakeStoreAccountUpdateParameters withFirewallAllowAzureIps(FirewallAllowAzureIpsState firewallAllowAzureIps) {
+        this.firewallAllowAzureIps = firewallAllowAzureIps;
+        return this;
+    }
+
+    /**
+     * Get the encryptionConfig value.
+     *
+     * @return the encryptionConfig value
+     */
+    public UpdateEncryptionConfig encryptionConfig() {
+        return this.encryptionConfig;
+    }
+
+    /**
+     * Set the encryptionConfig value.
+     *
+     * @param encryptionConfig the encryptionConfig value to set
+     * @return the DataLakeStoreAccountUpdateParameters object itself.
+     */
+    public DataLakeStoreAccountUpdateParameters withEncryptionConfig(UpdateEncryptionConfig encryptionConfig) {
+        this.encryptionConfig = encryptionConfig;
         return this;
     }
 

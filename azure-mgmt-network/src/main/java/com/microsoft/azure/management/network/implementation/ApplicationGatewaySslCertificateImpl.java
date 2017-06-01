@@ -49,38 +49,31 @@ class ApplicationGatewaySslCertificateImpl
 
     @Override
     public ApplicationGatewayImpl attach() {
-        this.parent().withSslCertificate(this);
-        return this.parent();
+        return this.parent().withSslCertificate(this);
     }
 
 
     // Withers
 
     @Override
-    public ApplicationGatewaySslCertificateImpl withPfxContent(byte[] pfxData) {
+    public ApplicationGatewaySslCertificateImpl withPfxFromBytes(byte[] pfxData) {
         String encoded = new String(BaseEncoding.base64().encode(pfxData));
         this.inner().withData(encoded);
         return this;
     }
 
     @Override
-    public ApplicationGatewaySslCertificateImpl withPfxFile(File pfxFile) {
+    public ApplicationGatewaySslCertificateImpl withPfxFromFile(File pfxFile) throws IOException {
         if (pfxFile == null) {
             return null;
         }
 
-        byte[] content;
-        try {
-            content = Files.readAllBytes(pfxFile.toPath());
-            return withPfxContent(content);
-        } catch (IOException e) {
-            e.printStackTrace();
-            return null;
-        }
+        byte[] content = Files.readAllBytes(pfxFile.toPath());
+        return (content != null) ? withPfxFromBytes(content) : null;
     }
 
     @Override
-    public ApplicationGatewaySslCertificateImpl withPassword(String password) {
+    public ApplicationGatewaySslCertificateImpl withPfxPassword(String password) {
         this.inner().withPassword(password);
         return this;
     }

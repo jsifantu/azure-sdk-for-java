@@ -16,6 +16,7 @@ import com.microsoft.azure.management.network.LoadBalancerProbe;
 import com.microsoft.azure.management.network.TransportProtocol;
 import com.microsoft.azure.management.resources.fluentcore.arm.ResourceUtils;
 import com.microsoft.azure.management.resources.fluentcore.arm.models.implementation.ChildResourceImpl;
+import com.microsoft.azure.management.resources.fluentcore.utils.Utils;
 
 /**
  *  Implementation for {@link LoadBalancingRule}.
@@ -46,27 +47,23 @@ class LoadBalancingRuleImpl
     }
 
     @Override
-    public boolean floatingIpEnabled() {
+    public boolean floatingIPEnabled() {
         return this.inner().enableFloatingIP();
     }
 
     @Override
     public int idleTimeoutInMinutes() {
-        return this.inner().idleTimeoutInMinutes();
+        return Utils.toPrimitiveInt(this.inner().idleTimeoutInMinutes());
     }
 
     @Override
     public int frontendPort() {
-        return this.inner().frontendPort();
+        return Utils.toPrimitiveInt(this.inner().frontendPort());
     }
 
     @Override
     public int backendPort() {
-        if (this.inner().backendPort() == null) {
-            return 0;
-        } else {
-            return this.inner().backendPort();
-        }
+        return Utils.toPrimitiveInt(this.inner().backendPort());
     }
 
     @Override
@@ -123,19 +120,19 @@ class LoadBalancingRuleImpl
     }
 
     @Override
-    public LoadBalancingRuleImpl withFloatingIp(boolean enable) {
+    public LoadBalancingRuleImpl withFloatingIP(boolean enable) {
         this.inner().withEnableFloatingIP(enable);
         return this;
     }
 
     @Override
-    public LoadBalancingRuleImpl withFloatingIpEnabled() {
-        return withFloatingIp(true);
+    public LoadBalancingRuleImpl withFloatingIPEnabled() {
+        return withFloatingIP(true);
     }
 
     @Override
-    public LoadBalancingRuleImpl withFloatingIpDisabled() {
-        return withFloatingIp(false);
+    public LoadBalancingRuleImpl withFloatingIPDisabled() {
+        return withFloatingIP(false);
     }
 
     @Override

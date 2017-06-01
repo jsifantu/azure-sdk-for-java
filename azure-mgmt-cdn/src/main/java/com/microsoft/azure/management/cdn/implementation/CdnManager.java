@@ -6,12 +6,16 @@
 
 package com.microsoft.azure.management.cdn.implementation;
 
-import com.microsoft.azure.RestClient;
+import com.microsoft.azure.AzureEnvironment;
+import com.microsoft.azure.AzureResponseBuilder;
 import com.microsoft.azure.credentials.AzureTokenCredentials;
 import com.microsoft.azure.management.cdn.CdnProfiles;
 import com.microsoft.azure.management.resources.fluentcore.arm.AzureConfigurable;
 import com.microsoft.azure.management.resources.fluentcore.arm.implementation.AzureConfigurableImpl;
 import com.microsoft.azure.management.resources.fluentcore.arm.implementation.Manager;
+import com.microsoft.azure.management.resources.fluentcore.utils.ProviderRegistrationInterceptor;
+import com.microsoft.azure.serializer.AzureJacksonAdapter;
+import com.microsoft.rest.RestClient;
 
 /**
  * Entry point to Azure CDN management.
@@ -38,8 +42,12 @@ public final class CdnManager extends Manager<CdnManager, CdnManagementClientImp
      * @return the TrafficManager
      */
     public static CdnManager authenticate(AzureTokenCredentials credentials, String subscriptionId) {
-        return new CdnManager(credentials.getEnvironment().newRestClientBuilder()
+        return new CdnManager(new RestClient.Builder()
+                .withBaseUrl(credentials.environment(), AzureEnvironment.Endpoint.RESOURCE_MANAGER)
                 .withCredentials(credentials)
+                .withSerializerAdapter(new AzureJacksonAdapter())
+                .withResponseBuilderFactory(new AzureResponseBuilder.Factory())
+                .withInterceptor(new ProviderRegistrationInterceptor(credentials))
                 .build(), subscriptionId);
     }
 
@@ -91,9 +99,7 @@ public final class CdnManager extends Manager<CdnManager, CdnManagementClientImp
      */
     public CdnProfiles profiles() {
         if (this.profiles == null) {
-            this.profiles = new CdnProfilesImpl(
-                    super.innerManagementClient,
-                    this);
+            this.profiles = new CdnProfilesImpl(this);
         }
         return this.profiles;
     }

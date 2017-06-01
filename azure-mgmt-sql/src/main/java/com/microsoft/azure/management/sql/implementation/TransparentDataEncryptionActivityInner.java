@@ -19,15 +19,15 @@ import com.microsoft.azure.management.sql.SqlSubResource;
 @JsonFlatten
 public class TransparentDataEncryptionActivityInner extends SqlSubResource {
     /**
-     * The status of the Azure SQL Database. Possible values include:
+     * The status of the Azure SQL database. Possible values include:
      * 'Encrypting', 'Decrypting'.
      */
     @JsonProperty(value = "properties.status", access = JsonProperty.Access.WRITE_ONLY)
     private TransparentDataEncryptionActivityStates status;
 
     /**
-     * The percent complete of the transparent data encryption scan for a
-     * Azure SQL Database.
+     * The percent complete of the transparent data encryption scan for a Azure
+     * SQL Database.
      */
     @JsonProperty(value = "properties.percentComplete", access = JsonProperty.Access.WRITE_ONLY)
     private Double percentComplete;

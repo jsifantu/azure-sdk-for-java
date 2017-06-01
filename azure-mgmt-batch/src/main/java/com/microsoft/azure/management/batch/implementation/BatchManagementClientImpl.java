@@ -10,13 +10,13 @@ package com.microsoft.azure.management.batch.implementation;
 
 import com.microsoft.azure.AzureClient;
 import com.microsoft.azure.AzureServiceClient;
-import com.microsoft.azure.RestClient;
 import com.microsoft.rest.credentials.ServiceClientCredentials;
+import com.microsoft.rest.RestClient;
 
 /**
  * Initializes a new instance of the BatchManagementClientImpl class.
  */
-public final class BatchManagementClientImpl extends AzureServiceClient {
+public class BatchManagementClientImpl extends AzureServiceClient {
     /** the {@link AzureClient} used for long running operations. */
     private AzureClient azureClient;
 
@@ -28,11 +28,11 @@ public final class BatchManagementClientImpl extends AzureServiceClient {
         return this.azureClient;
     }
 
-    /** A unique identifier of a Microsoft Azure subscription. The subscription id forms part of the URI for every service call. */
+    /** The Azure subscription ID. This is a GUID-formatted string (e.g. 00000000-0000-0000-0000-000000000000). */
     private String subscriptionId;
 
     /**
-     * Gets A unique identifier of a Microsoft Azure subscription. The subscription id forms part of the URI for every service call.
+     * Gets The Azure subscription ID. This is a GUID-formatted string (e.g. 00000000-0000-0000-0000-000000000000).
      *
      * @return the subscriptionId value.
      */
@@ -41,7 +41,7 @@ public final class BatchManagementClientImpl extends AzureServiceClient {
     }
 
     /**
-     * Sets A unique identifier of a Microsoft Azure subscription. The subscription id forms part of the URI for every service call.
+     * Sets The Azure subscription ID. This is a GUID-formatted string (e.g. 00000000-0000-0000-0000-000000000000).
      *
      * @param subscriptionId the subscriptionId value.
      * @return the service client itself
@@ -51,11 +51,11 @@ public final class BatchManagementClientImpl extends AzureServiceClient {
         return this;
     }
 
-    /** Client API Version. */
+    /** The API version to be used with the HTTP request. */
     private String apiVersion;
 
     /**
-     * Gets Client API Version.
+     * Gets The API version to be used with the HTTP request.
      *
      * @return the apiVersion value.
      */
@@ -185,6 +185,19 @@ public final class BatchManagementClientImpl extends AzureServiceClient {
     }
 
     /**
+     * The OperationsInner object to access its operations.
+     */
+    private OperationsInner operations;
+
+    /**
+     * Gets the OperationsInner object to access its operations.
+     * @return the OperationsInner object.
+     */
+    public OperationsInner operations() {
+        return this.operations;
+    }
+
+    /**
      * Initializes an instance of BatchManagementClient client.
      *
      * @param credentials the management credentials for Azure
@@ -200,10 +213,8 @@ public final class BatchManagementClientImpl extends AzureServiceClient {
      * @param credentials the management credentials for Azure
      */
     public BatchManagementClientImpl(String baseUrl, ServiceClientCredentials credentials) {
-        this(new RestClient.Builder()
-                .withBaseUrl(baseUrl)
-                .withCredentials(credentials)
-                .build());
+        super(baseUrl, credentials);
+        initialize();
     }
 
     /**
@@ -217,7 +228,7 @@ public final class BatchManagementClientImpl extends AzureServiceClient {
     }
 
     protected void initialize() {
-        this.apiVersion = "2015-12-01";
+        this.apiVersion = "2017-05-01";
         this.acceptLanguage = "en-US";
         this.longRunningOperationRetryTimeout = 30;
         this.generateClientRequestId = true;
@@ -225,6 +236,7 @@ public final class BatchManagementClientImpl extends AzureServiceClient {
         this.applicationPackages = new ApplicationPackagesInner(restClient().retrofit(), this);
         this.applications = new ApplicationsInner(restClient().retrofit(), this);
         this.locations = new LocationsInner(restClient().retrofit(), this);
+        this.operations = new OperationsInner(restClient().retrofit(), this);
         this.azureClient = new AzureClient(this);
     }
 
@@ -235,8 +247,6 @@ public final class BatchManagementClientImpl extends AzureServiceClient {
      */
     @Override
     public String userAgent() {
-        return String.format("Azure-SDK-For-Java/%s (%s)",
-                getClass().getPackage().getImplementationVersion(),
-                "BatchManagementClient, 2015-12-01");
+        return String.format("%s (%s, %s)", super.userAgent(), "BatchManagementClient", "2017-05-01");
     }
 }

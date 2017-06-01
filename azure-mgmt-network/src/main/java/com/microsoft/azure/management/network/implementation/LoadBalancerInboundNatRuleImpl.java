@@ -13,6 +13,7 @@ import com.microsoft.azure.management.network.LoadBalancer;
 import com.microsoft.azure.management.network.TransportProtocol;
 import com.microsoft.azure.management.resources.fluentcore.arm.ResourceUtils;
 import com.microsoft.azure.management.resources.fluentcore.arm.models.implementation.ChildResourceImpl;
+import com.microsoft.azure.management.resources.fluentcore.utils.Utils;
 
 /**
  *  Implementation for {@link LoadBalancerInboundNatRule}.
@@ -38,7 +39,7 @@ class LoadBalancerInboundNatRuleImpl
     }
 
     @Override
-    public String backendNicIpConfigurationName() {
+    public String backendNicIPConfigurationName() {
         if (this.inner().backendIPConfiguration() == null) {
             return null;
         } else {
@@ -48,11 +49,7 @@ class LoadBalancerInboundNatRuleImpl
 
     @Override
     public int backendPort() {
-        if (this.inner().backendPort() == null) {
-            return 0;
-        } else {
-            return this.inner().backendPort().intValue();
-        }
+        return Utils.toPrimitiveInt(this.inner().backendPort());
     }
 
     @Override
@@ -71,15 +68,11 @@ class LoadBalancerInboundNatRuleImpl
 
     @Override
     public int frontendPort() {
-        if (this.inner().frontendPort() == null) {
-            return 0;
-        } else {
-            return this.inner().frontendPort().intValue();
-        }
+        return Utils.toPrimitiveInt(this.inner().frontendPort());
     }
 
     @Override
-    public boolean floatingIpEnabled() {
+    public boolean floatingIPEnabled() {
         return this.inner().enableFloatingIP().booleanValue();
     }
 
@@ -92,7 +85,7 @@ class LoadBalancerInboundNatRuleImpl
 
     @Override
     public int idleTimeoutInMinutes() {
-        return this.inner().idleTimeoutInMinutes();
+        return Utils.toPrimitiveInt(this.inner().idleTimeoutInMinutes());
     }
 
     // Fluent setters
@@ -104,17 +97,17 @@ class LoadBalancerInboundNatRuleImpl
     }
 
     @Override
-    public LoadBalancerInboundNatRuleImpl withFloatingIpEnabled() {
-        return withFloatingIp(true);
+    public LoadBalancerInboundNatRuleImpl withFloatingIPEnabled() {
+        return withFloatingIP(true);
     }
 
     @Override
-    public LoadBalancerInboundNatRuleImpl withFloatingIpDisabled() {
-        return withFloatingIp(false);
+    public LoadBalancerInboundNatRuleImpl withFloatingIPDisabled() {
+        return withFloatingIP(false);
     }
 
     @Override
-    public LoadBalancerInboundNatRuleImpl withFloatingIp(boolean enabled) {
+    public LoadBalancerInboundNatRuleImpl withFloatingIP(boolean enabled) {
         this.inner().withEnableFloatingIP(enabled);
         return this;
     }

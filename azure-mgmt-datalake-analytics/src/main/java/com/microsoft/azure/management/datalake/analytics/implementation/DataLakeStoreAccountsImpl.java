@@ -11,8 +11,7 @@ package com.microsoft.azure.management.datalake.analytics.implementation;
 import retrofit2.Retrofit;
 import com.microsoft.azure.management.datalake.analytics.DataLakeStoreAccounts;
 import com.google.common.reflect.TypeToken;
-import com.microsoft.azure.AzureServiceCall;
-import com.microsoft.azure.AzureServiceResponseBuilder;
+import com.microsoft.azure.AzureServiceFuture;
 import com.microsoft.azure.CloudException;
 import com.microsoft.azure.ListOperationCallback;
 import com.microsoft.azure.management.datalake.analytics.models.AddDataLakeStoreParameters;
@@ -20,8 +19,8 @@ import com.microsoft.azure.management.datalake.analytics.models.DataLakeStoreAcc
 import com.microsoft.azure.management.datalake.analytics.models.PageImpl;
 import com.microsoft.azure.Page;
 import com.microsoft.azure.PagedList;
-import com.microsoft.rest.ServiceCall;
 import com.microsoft.rest.ServiceCallback;
+import com.microsoft.rest.ServiceFuture;
 import com.microsoft.rest.ServiceResponse;
 import com.microsoft.rest.Validator;
 import java.io.IOException;
@@ -35,6 +34,7 @@ import retrofit2.http.HTTP;
 import retrofit2.http.Path;
 import retrofit2.http.PUT;
 import retrofit2.http.Query;
+import retrofit2.http.Url;
 import retrofit2.Response;
 import rx.functions.Func1;
 import rx.Observable;
@@ -43,7 +43,7 @@ import rx.Observable;
  * An instance of this class provides access to all the operations defined
  * in DataLakeStoreAccounts.
  */
-public final class DataLakeStoreAccountsImpl implements DataLakeStoreAccounts {
+public class DataLakeStoreAccountsImpl implements DataLakeStoreAccounts {
     /** The Retrofit service to perform REST calls. */
     private DataLakeStoreAccountsService service;
     /** The service client containing this operation class. */
@@ -65,25 +65,25 @@ public final class DataLakeStoreAccountsImpl implements DataLakeStoreAccounts {
      * used by Retrofit to perform actually REST calls.
      */
     interface DataLakeStoreAccountsService {
-        @Headers("Content-Type: application/json; charset=utf-8")
+        @Headers({ "Content-Type: application/json; charset=utf-8", "x-ms-logging-context: com.microsoft.azure.management.datalake.analytics.DataLakeStoreAccounts get" })
         @GET("subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DataLakeAnalytics/accounts/{accountName}/DataLakeStoreAccounts/{dataLakeStoreAccountName}")
         Observable<Response<ResponseBody>> get(@Path("resourceGroupName") String resourceGroupName, @Path("accountName") String accountName, @Path("dataLakeStoreAccountName") String dataLakeStoreAccountName, @Path("subscriptionId") String subscriptionId, @Query("api-version") String apiVersion, @Header("accept-language") String acceptLanguage, @Header("User-Agent") String userAgent);
 
-        @Headers("Content-Type: application/json; charset=utf-8")
+        @Headers({ "Content-Type: application/json; charset=utf-8", "x-ms-logging-context: com.microsoft.azure.management.datalake.analytics.DataLakeStoreAccounts delete" })
         @HTTP(path = "subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DataLakeAnalytics/accounts/{accountName}/DataLakeStoreAccounts/{dataLakeStoreAccountName}", method = "DELETE", hasBody = true)
         Observable<Response<ResponseBody>> delete(@Path("resourceGroupName") String resourceGroupName, @Path("accountName") String accountName, @Path("dataLakeStoreAccountName") String dataLakeStoreAccountName, @Path("subscriptionId") String subscriptionId, @Query("api-version") String apiVersion, @Header("accept-language") String acceptLanguage, @Header("User-Agent") String userAgent);
 
-        @Headers("Content-Type: application/json; charset=utf-8")
+        @Headers({ "Content-Type: application/json; charset=utf-8", "x-ms-logging-context: com.microsoft.azure.management.datalake.analytics.DataLakeStoreAccounts add" })
         @PUT("subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DataLakeAnalytics/accounts/{accountName}/DataLakeStoreAccounts/{dataLakeStoreAccountName}")
         Observable<Response<ResponseBody>> add(@Path("resourceGroupName") String resourceGroupName, @Path("accountName") String accountName, @Path("dataLakeStoreAccountName") String dataLakeStoreAccountName, @Path("subscriptionId") String subscriptionId, @Body AddDataLakeStoreParameters parameters, @Query("api-version") String apiVersion, @Header("accept-language") String acceptLanguage, @Header("User-Agent") String userAgent);
 
-        @Headers("Content-Type: application/json; charset=utf-8")
+        @Headers({ "Content-Type: application/json; charset=utf-8", "x-ms-logging-context: com.microsoft.azure.management.datalake.analytics.DataLakeStoreAccounts listByAccount" })
         @GET("subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DataLakeAnalytics/accounts/{accountName}/DataLakeStoreAccounts/")
         Observable<Response<ResponseBody>> listByAccount(@Path("resourceGroupName") String resourceGroupName, @Path("accountName") String accountName, @Path("subscriptionId") String subscriptionId, @Query("$filter") String filter, @Query("$top") Integer top, @Query("$skip") Integer skip, @Query("$select") String select, @Query("$orderby") String orderby, @Query("$count") Boolean count, @Query("api-version") String apiVersion, @Header("accept-language") String acceptLanguage, @Header("User-Agent") String userAgent);
 
-        @Headers("Content-Type: application/json; charset=utf-8")
-        @GET("{nextLink}")
-        Observable<Response<ResponseBody>> listByAccountNext(@Path(value = "nextLink", encoded = true) String nextPageLink, @Header("accept-language") String acceptLanguage, @Header("User-Agent") String userAgent);
+        @Headers({ "Content-Type: application/json; charset=utf-8", "x-ms-logging-context: com.microsoft.azure.management.datalake.analytics.DataLakeStoreAccounts listByAccountNext" })
+        @GET
+        Observable<Response<ResponseBody>> listByAccountNext(@Url String nextUrl, @Header("accept-language") String acceptLanguage, @Header("User-Agent") String userAgent);
 
     }
 
@@ -93,10 +93,13 @@ public final class DataLakeStoreAccountsImpl implements DataLakeStoreAccounts {
      * @param resourceGroupName The name of the Azure resource group that contains the Data Lake Analytics account.
      * @param accountName The name of the Data Lake Analytics account from which to retrieve the Data Lake Store account details.
      * @param dataLakeStoreAccountName The name of the Data Lake Store account to retrieve
+     * @throws IllegalArgumentException thrown if parameters fail the validation
+     * @throws CloudException thrown if the request is rejected by server
+     * @throws RuntimeException all other wrapped checked exceptions if the request fails to be sent
      * @return the DataLakeStoreAccountInfo object if successful.
      */
     public DataLakeStoreAccountInfo get(String resourceGroupName, String accountName, String dataLakeStoreAccountName) {
-        return getWithServiceResponseAsync(resourceGroupName, accountName, dataLakeStoreAccountName).toBlocking().single().getBody();
+        return getWithServiceResponseAsync(resourceGroupName, accountName, dataLakeStoreAccountName).toBlocking().single().body();
     }
 
     /**
@@ -106,10 +109,11 @@ public final class DataLakeStoreAccountsImpl implements DataLakeStoreAccounts {
      * @param accountName The name of the Data Lake Analytics account from which to retrieve the Data Lake Store account details.
      * @param dataLakeStoreAccountName The name of the Data Lake Store account to retrieve
      * @param serviceCallback the async ServiceCallback to handle successful and failed responses.
-     * @return the {@link ServiceCall} object
+     * @throws IllegalArgumentException thrown if parameters fail the validation
+     * @return the {@link ServiceFuture} object
      */
-    public ServiceCall<DataLakeStoreAccountInfo> getAsync(String resourceGroupName, String accountName, String dataLakeStoreAccountName, final ServiceCallback<DataLakeStoreAccountInfo> serviceCallback) {
-        return ServiceCall.create(getWithServiceResponseAsync(resourceGroupName, accountName, dataLakeStoreAccountName), serviceCallback);
+    public ServiceFuture<DataLakeStoreAccountInfo> getAsync(String resourceGroupName, String accountName, String dataLakeStoreAccountName, final ServiceCallback<DataLakeStoreAccountInfo> serviceCallback) {
+        return ServiceFuture.fromResponse(getWithServiceResponseAsync(resourceGroupName, accountName, dataLakeStoreAccountName), serviceCallback);
     }
 
     /**
@@ -118,13 +122,14 @@ public final class DataLakeStoreAccountsImpl implements DataLakeStoreAccounts {
      * @param resourceGroupName The name of the Azure resource group that contains the Data Lake Analytics account.
      * @param accountName The name of the Data Lake Analytics account from which to retrieve the Data Lake Store account details.
      * @param dataLakeStoreAccountName The name of the Data Lake Store account to retrieve
+     * @throws IllegalArgumentException thrown if parameters fail the validation
      * @return the observable to the DataLakeStoreAccountInfo object
      */
     public Observable<DataLakeStoreAccountInfo> getAsync(String resourceGroupName, String accountName, String dataLakeStoreAccountName) {
         return getWithServiceResponseAsync(resourceGroupName, accountName, dataLakeStoreAccountName).map(new Func1<ServiceResponse<DataLakeStoreAccountInfo>, DataLakeStoreAccountInfo>() {
             @Override
             public DataLakeStoreAccountInfo call(ServiceResponse<DataLakeStoreAccountInfo> response) {
-                return response.getBody();
+                return response.body();
             }
         });
     }
@@ -135,6 +140,7 @@ public final class DataLakeStoreAccountsImpl implements DataLakeStoreAccounts {
      * @param resourceGroupName The name of the Azure resource group that contains the Data Lake Analytics account.
      * @param accountName The name of the Data Lake Analytics account from which to retrieve the Data Lake Store account details.
      * @param dataLakeStoreAccountName The name of the Data Lake Store account to retrieve
+     * @throws IllegalArgumentException thrown if parameters fail the validation
      * @return the observable to the DataLakeStoreAccountInfo object
      */
     public Observable<ServiceResponse<DataLakeStoreAccountInfo>> getWithServiceResponseAsync(String resourceGroupName, String accountName, String dataLakeStoreAccountName) {
@@ -168,7 +174,7 @@ public final class DataLakeStoreAccountsImpl implements DataLakeStoreAccounts {
     }
 
     private ServiceResponse<DataLakeStoreAccountInfo> getDelegate(Response<ResponseBody> response) throws CloudException, IOException, IllegalArgumentException {
-        return new AzureServiceResponseBuilder<DataLakeStoreAccountInfo, CloudException>(this.client.mapperAdapter())
+        return this.client.restClient().responseBuilderFactory().<DataLakeStoreAccountInfo, CloudException>newInstance(this.client.serializerAdapter())
                 .register(200, new TypeToken<DataLakeStoreAccountInfo>() { }.getType())
                 .registerError(CloudException.class)
                 .build(response);
@@ -180,9 +186,12 @@ public final class DataLakeStoreAccountsImpl implements DataLakeStoreAccounts {
      * @param resourceGroupName The name of the Azure resource group that contains the Data Lake Analytics account.
      * @param accountName The name of the Data Lake Analytics account from which to remove the Data Lake Store account.
      * @param dataLakeStoreAccountName The name of the Data Lake Store account to remove
+     * @throws IllegalArgumentException thrown if parameters fail the validation
+     * @throws CloudException thrown if the request is rejected by server
+     * @throws RuntimeException all other wrapped checked exceptions if the request fails to be sent
      */
     public void delete(String resourceGroupName, String accountName, String dataLakeStoreAccountName) {
-        deleteWithServiceResponseAsync(resourceGroupName, accountName, dataLakeStoreAccountName).toBlocking().single().getBody();
+        deleteWithServiceResponseAsync(resourceGroupName, accountName, dataLakeStoreAccountName).toBlocking().single().body();
     }
 
     /**
@@ -192,10 +201,11 @@ public final class DataLakeStoreAccountsImpl implements DataLakeStoreAccounts {
      * @param accountName The name of the Data Lake Analytics account from which to remove the Data Lake Store account.
      * @param dataLakeStoreAccountName The name of the Data Lake Store account to remove
      * @param serviceCallback the async ServiceCallback to handle successful and failed responses.
-     * @return the {@link ServiceCall} object
+     * @throws IllegalArgumentException thrown if parameters fail the validation
+     * @return the {@link ServiceFuture} object
      */
-    public ServiceCall<Void> deleteAsync(String resourceGroupName, String accountName, String dataLakeStoreAccountName, final ServiceCallback<Void> serviceCallback) {
-        return ServiceCall.create(deleteWithServiceResponseAsync(resourceGroupName, accountName, dataLakeStoreAccountName), serviceCallback);
+    public ServiceFuture<Void> deleteAsync(String resourceGroupName, String accountName, String dataLakeStoreAccountName, final ServiceCallback<Void> serviceCallback) {
+        return ServiceFuture.fromResponse(deleteWithServiceResponseAsync(resourceGroupName, accountName, dataLakeStoreAccountName), serviceCallback);
     }
 
     /**
@@ -204,13 +214,14 @@ public final class DataLakeStoreAccountsImpl implements DataLakeStoreAccounts {
      * @param resourceGroupName The name of the Azure resource group that contains the Data Lake Analytics account.
      * @param accountName The name of the Data Lake Analytics account from which to remove the Data Lake Store account.
      * @param dataLakeStoreAccountName The name of the Data Lake Store account to remove
+     * @throws IllegalArgumentException thrown if parameters fail the validation
      * @return the {@link ServiceResponse} object if successful.
      */
     public Observable<Void> deleteAsync(String resourceGroupName, String accountName, String dataLakeStoreAccountName) {
         return deleteWithServiceResponseAsync(resourceGroupName, accountName, dataLakeStoreAccountName).map(new Func1<ServiceResponse<Void>, Void>() {
             @Override
             public Void call(ServiceResponse<Void> response) {
-                return response.getBody();
+                return response.body();
             }
         });
     }
@@ -221,6 +232,7 @@ public final class DataLakeStoreAccountsImpl implements DataLakeStoreAccounts {
      * @param resourceGroupName The name of the Azure resource group that contains the Data Lake Analytics account.
      * @param accountName The name of the Data Lake Analytics account from which to remove the Data Lake Store account.
      * @param dataLakeStoreAccountName The name of the Data Lake Store account to remove
+     * @throws IllegalArgumentException thrown if parameters fail the validation
      * @return the {@link ServiceResponse} object if successful.
      */
     public Observable<ServiceResponse<Void>> deleteWithServiceResponseAsync(String resourceGroupName, String accountName, String dataLakeStoreAccountName) {
@@ -254,8 +266,9 @@ public final class DataLakeStoreAccountsImpl implements DataLakeStoreAccounts {
     }
 
     private ServiceResponse<Void> deleteDelegate(Response<ResponseBody> response) throws CloudException, IOException, IllegalArgumentException {
-        return new AzureServiceResponseBuilder<Void, CloudException>(this.client.mapperAdapter())
+        return this.client.restClient().responseBuilderFactory().<Void, CloudException>newInstance(this.client.serializerAdapter())
                 .register(200, new TypeToken<Void>() { }.getType())
+                .registerError(CloudException.class)
                 .build(response);
     }
 
@@ -265,10 +278,99 @@ public final class DataLakeStoreAccountsImpl implements DataLakeStoreAccounts {
      * @param resourceGroupName The name of the Azure resource group that contains the Data Lake Analytics account.
      * @param accountName The name of the Data Lake Analytics account to which to add the Data Lake Store account.
      * @param dataLakeStoreAccountName The name of the Data Lake Store account to add.
+     * @throws IllegalArgumentException thrown if parameters fail the validation
+     * @throws CloudException thrown if the request is rejected by server
+     * @throws RuntimeException all other wrapped checked exceptions if the request fails to be sent
+     */
+    public void add(String resourceGroupName, String accountName, String dataLakeStoreAccountName) {
+        addWithServiceResponseAsync(resourceGroupName, accountName, dataLakeStoreAccountName).toBlocking().single().body();
+    }
+
+    /**
+     * Updates the specified Data Lake Analytics account to include the additional Data Lake Store account.
+     *
+     * @param resourceGroupName The name of the Azure resource group that contains the Data Lake Analytics account.
+     * @param accountName The name of the Data Lake Analytics account to which to add the Data Lake Store account.
+     * @param dataLakeStoreAccountName The name of the Data Lake Store account to add.
+     * @param serviceCallback the async ServiceCallback to handle successful and failed responses.
+     * @throws IllegalArgumentException thrown if parameters fail the validation
+     * @return the {@link ServiceFuture} object
+     */
+    public ServiceFuture<Void> addAsync(String resourceGroupName, String accountName, String dataLakeStoreAccountName, final ServiceCallback<Void> serviceCallback) {
+        return ServiceFuture.fromResponse(addWithServiceResponseAsync(resourceGroupName, accountName, dataLakeStoreAccountName), serviceCallback);
+    }
+
+    /**
+     * Updates the specified Data Lake Analytics account to include the additional Data Lake Store account.
+     *
+     * @param resourceGroupName The name of the Azure resource group that contains the Data Lake Analytics account.
+     * @param accountName The name of the Data Lake Analytics account to which to add the Data Lake Store account.
+     * @param dataLakeStoreAccountName The name of the Data Lake Store account to add.
+     * @throws IllegalArgumentException thrown if parameters fail the validation
+     * @return the {@link ServiceResponse} object if successful.
+     */
+    public Observable<Void> addAsync(String resourceGroupName, String accountName, String dataLakeStoreAccountName) {
+        return addWithServiceResponseAsync(resourceGroupName, accountName, dataLakeStoreAccountName).map(new Func1<ServiceResponse<Void>, Void>() {
+            @Override
+            public Void call(ServiceResponse<Void> response) {
+                return response.body();
+            }
+        });
+    }
+
+    /**
+     * Updates the specified Data Lake Analytics account to include the additional Data Lake Store account.
+     *
+     * @param resourceGroupName The name of the Azure resource group that contains the Data Lake Analytics account.
+     * @param accountName The name of the Data Lake Analytics account to which to add the Data Lake Store account.
+     * @param dataLakeStoreAccountName The name of the Data Lake Store account to add.
+     * @throws IllegalArgumentException thrown if parameters fail the validation
+     * @return the {@link ServiceResponse} object if successful.
+     */
+    public Observable<ServiceResponse<Void>> addWithServiceResponseAsync(String resourceGroupName, String accountName, String dataLakeStoreAccountName) {
+        if (resourceGroupName == null) {
+            throw new IllegalArgumentException("Parameter resourceGroupName is required and cannot be null.");
+        }
+        if (accountName == null) {
+            throw new IllegalArgumentException("Parameter accountName is required and cannot be null.");
+        }
+        if (dataLakeStoreAccountName == null) {
+            throw new IllegalArgumentException("Parameter dataLakeStoreAccountName is required and cannot be null.");
+        }
+        if (this.client.subscriptionId() == null) {
+            throw new IllegalArgumentException("Parameter this.client.subscriptionId() is required and cannot be null.");
+        }
+        if (this.client.apiVersion() == null) {
+            throw new IllegalArgumentException("Parameter this.client.apiVersion() is required and cannot be null.");
+        }
+        final AddDataLakeStoreParameters parameters = null;
+        return service.add(resourceGroupName, accountName, dataLakeStoreAccountName, this.client.subscriptionId(), parameters, this.client.apiVersion(), this.client.acceptLanguage(), this.client.userAgent())
+            .flatMap(new Func1<Response<ResponseBody>, Observable<ServiceResponse<Void>>>() {
+                @Override
+                public Observable<ServiceResponse<Void>> call(Response<ResponseBody> response) {
+                    try {
+                        ServiceResponse<Void> clientResponse = addDelegate(response);
+                        return Observable.just(clientResponse);
+                    } catch (Throwable t) {
+                        return Observable.error(t);
+                    }
+                }
+            });
+    }
+
+    /**
+     * Updates the specified Data Lake Analytics account to include the additional Data Lake Store account.
+     *
+     * @param resourceGroupName The name of the Azure resource group that contains the Data Lake Analytics account.
+     * @param accountName The name of the Data Lake Analytics account to which to add the Data Lake Store account.
+     * @param dataLakeStoreAccountName The name of the Data Lake Store account to add.
      * @param parameters The details of the Data Lake Store account.
+     * @throws IllegalArgumentException thrown if parameters fail the validation
+     * @throws CloudException thrown if the request is rejected by server
+     * @throws RuntimeException all other wrapped checked exceptions if the request fails to be sent
      */
     public void add(String resourceGroupName, String accountName, String dataLakeStoreAccountName, AddDataLakeStoreParameters parameters) {
-        addWithServiceResponseAsync(resourceGroupName, accountName, dataLakeStoreAccountName, parameters).toBlocking().single().getBody();
+        addWithServiceResponseAsync(resourceGroupName, accountName, dataLakeStoreAccountName, parameters).toBlocking().single().body();
     }
 
     /**
@@ -279,10 +381,11 @@ public final class DataLakeStoreAccountsImpl implements DataLakeStoreAccounts {
      * @param dataLakeStoreAccountName The name of the Data Lake Store account to add.
      * @param parameters The details of the Data Lake Store account.
      * @param serviceCallback the async ServiceCallback to handle successful and failed responses.
-     * @return the {@link ServiceCall} object
+     * @throws IllegalArgumentException thrown if parameters fail the validation
+     * @return the {@link ServiceFuture} object
      */
-    public ServiceCall<Void> addAsync(String resourceGroupName, String accountName, String dataLakeStoreAccountName, AddDataLakeStoreParameters parameters, final ServiceCallback<Void> serviceCallback) {
-        return ServiceCall.create(addWithServiceResponseAsync(resourceGroupName, accountName, dataLakeStoreAccountName, parameters), serviceCallback);
+    public ServiceFuture<Void> addAsync(String resourceGroupName, String accountName, String dataLakeStoreAccountName, AddDataLakeStoreParameters parameters, final ServiceCallback<Void> serviceCallback) {
+        return ServiceFuture.fromResponse(addWithServiceResponseAsync(resourceGroupName, accountName, dataLakeStoreAccountName, parameters), serviceCallback);
     }
 
     /**
@@ -292,13 +395,14 @@ public final class DataLakeStoreAccountsImpl implements DataLakeStoreAccounts {
      * @param accountName The name of the Data Lake Analytics account to which to add the Data Lake Store account.
      * @param dataLakeStoreAccountName The name of the Data Lake Store account to add.
      * @param parameters The details of the Data Lake Store account.
+     * @throws IllegalArgumentException thrown if parameters fail the validation
      * @return the {@link ServiceResponse} object if successful.
      */
     public Observable<Void> addAsync(String resourceGroupName, String accountName, String dataLakeStoreAccountName, AddDataLakeStoreParameters parameters) {
         return addWithServiceResponseAsync(resourceGroupName, accountName, dataLakeStoreAccountName, parameters).map(new Func1<ServiceResponse<Void>, Void>() {
             @Override
             public Void call(ServiceResponse<Void> response) {
-                return response.getBody();
+                return response.body();
             }
         });
     }
@@ -310,6 +414,7 @@ public final class DataLakeStoreAccountsImpl implements DataLakeStoreAccounts {
      * @param accountName The name of the Data Lake Analytics account to which to add the Data Lake Store account.
      * @param dataLakeStoreAccountName The name of the Data Lake Store account to add.
      * @param parameters The details of the Data Lake Store account.
+     * @throws IllegalArgumentException thrown if parameters fail the validation
      * @return the {@link ServiceResponse} object if successful.
      */
     public Observable<ServiceResponse<Void>> addWithServiceResponseAsync(String resourceGroupName, String accountName, String dataLakeStoreAccountName, AddDataLakeStoreParameters parameters) {
@@ -324,9 +429,6 @@ public final class DataLakeStoreAccountsImpl implements DataLakeStoreAccounts {
         }
         if (this.client.subscriptionId() == null) {
             throw new IllegalArgumentException("Parameter this.client.subscriptionId() is required and cannot be null.");
-        }
-        if (parameters == null) {
-            throw new IllegalArgumentException("Parameter parameters is required and cannot be null.");
         }
         if (this.client.apiVersion() == null) {
             throw new IllegalArgumentException("Parameter this.client.apiVersion() is required and cannot be null.");
@@ -347,8 +449,9 @@ public final class DataLakeStoreAccountsImpl implements DataLakeStoreAccounts {
     }
 
     private ServiceResponse<Void> addDelegate(Response<ResponseBody> response) throws CloudException, IOException, IllegalArgumentException {
-        return new AzureServiceResponseBuilder<Void, CloudException>(this.client.mapperAdapter())
+        return this.client.restClient().responseBuilderFactory().<Void, CloudException>newInstance(this.client.serializerAdapter())
                 .register(200, new TypeToken<Void>() { }.getType())
+                .registerError(CloudException.class)
                 .build(response);
     }
 
@@ -357,14 +460,17 @@ public final class DataLakeStoreAccountsImpl implements DataLakeStoreAccounts {
      *
      * @param resourceGroupName The name of the Azure resource group that contains the Data Lake Analytics account.
      * @param accountName The name of the Data Lake Analytics account for which to list Data Lake Store accounts.
+     * @throws IllegalArgumentException thrown if parameters fail the validation
+     * @throws CloudException thrown if the request is rejected by server
+     * @throws RuntimeException all other wrapped checked exceptions if the request fails to be sent
      * @return the PagedList&lt;DataLakeStoreAccountInfo&gt; object if successful.
      */
     public PagedList<DataLakeStoreAccountInfo> listByAccount(final String resourceGroupName, final String accountName) {
         ServiceResponse<Page<DataLakeStoreAccountInfo>> response = listByAccountSinglePageAsync(resourceGroupName, accountName).toBlocking().single();
-        return new PagedList<DataLakeStoreAccountInfo>(response.getBody()) {
+        return new PagedList<DataLakeStoreAccountInfo>(response.body()) {
             @Override
             public Page<DataLakeStoreAccountInfo> nextPage(String nextPageLink) {
-                return listByAccountNextSinglePageAsync(nextPageLink).toBlocking().single().getBody();
+                return listByAccountNextSinglePageAsync(nextPageLink).toBlocking().single().body();
             }
         };
     }
@@ -375,10 +481,11 @@ public final class DataLakeStoreAccountsImpl implements DataLakeStoreAccounts {
      * @param resourceGroupName The name of the Azure resource group that contains the Data Lake Analytics account.
      * @param accountName The name of the Data Lake Analytics account for which to list Data Lake Store accounts.
      * @param serviceCallback the async ServiceCallback to handle successful and failed responses.
-     * @return the {@link ServiceCall} object
+     * @throws IllegalArgumentException thrown if parameters fail the validation
+     * @return the {@link ServiceFuture} object
      */
-    public ServiceCall<List<DataLakeStoreAccountInfo>> listByAccountAsync(final String resourceGroupName, final String accountName, final ListOperationCallback<DataLakeStoreAccountInfo> serviceCallback) {
-        return AzureServiceCall.create(
+    public ServiceFuture<List<DataLakeStoreAccountInfo>> listByAccountAsync(final String resourceGroupName, final String accountName, final ListOperationCallback<DataLakeStoreAccountInfo> serviceCallback) {
+        return AzureServiceFuture.fromPageResponse(
             listByAccountSinglePageAsync(resourceGroupName, accountName),
             new Func1<String, Observable<ServiceResponse<Page<DataLakeStoreAccountInfo>>>>() {
                 @Override
@@ -394,6 +501,7 @@ public final class DataLakeStoreAccountsImpl implements DataLakeStoreAccounts {
      *
      * @param resourceGroupName The name of the Azure resource group that contains the Data Lake Analytics account.
      * @param accountName The name of the Data Lake Analytics account for which to list Data Lake Store accounts.
+     * @throws IllegalArgumentException thrown if parameters fail the validation
      * @return the observable to the PagedList&lt;DataLakeStoreAccountInfo&gt; object
      */
     public Observable<Page<DataLakeStoreAccountInfo>> listByAccountAsync(final String resourceGroupName, final String accountName) {
@@ -401,7 +509,7 @@ public final class DataLakeStoreAccountsImpl implements DataLakeStoreAccounts {
             .map(new Func1<ServiceResponse<Page<DataLakeStoreAccountInfo>>, Page<DataLakeStoreAccountInfo>>() {
                 @Override
                 public Page<DataLakeStoreAccountInfo> call(ServiceResponse<Page<DataLakeStoreAccountInfo>> response) {
-                    return response.getBody();
+                    return response.body();
                 }
             });
     }
@@ -411,6 +519,7 @@ public final class DataLakeStoreAccountsImpl implements DataLakeStoreAccounts {
      *
      * @param resourceGroupName The name of the Azure resource group that contains the Data Lake Analytics account.
      * @param accountName The name of the Data Lake Analytics account for which to list Data Lake Store accounts.
+     * @throws IllegalArgumentException thrown if parameters fail the validation
      * @return the observable to the PagedList&lt;DataLakeStoreAccountInfo&gt; object
      */
     public Observable<ServiceResponse<Page<DataLakeStoreAccountInfo>>> listByAccountWithServiceResponseAsync(final String resourceGroupName, final String accountName) {
@@ -418,7 +527,7 @@ public final class DataLakeStoreAccountsImpl implements DataLakeStoreAccounts {
             .concatMap(new Func1<ServiceResponse<Page<DataLakeStoreAccountInfo>>, Observable<ServiceResponse<Page<DataLakeStoreAccountInfo>>>>() {
                 @Override
                 public Observable<ServiceResponse<Page<DataLakeStoreAccountInfo>>> call(ServiceResponse<Page<DataLakeStoreAccountInfo>> page) {
-                    String nextPageLink = page.getBody().getNextPageLink();
+                    String nextPageLink = page.body().nextPageLink();
                     if (nextPageLink == null) {
                         return Observable.just(page);
                     }
@@ -432,6 +541,7 @@ public final class DataLakeStoreAccountsImpl implements DataLakeStoreAccounts {
      *
      * @param resourceGroupName The name of the Azure resource group that contains the Data Lake Analytics account.
      * @param accountName The name of the Data Lake Analytics account for which to list Data Lake Store accounts.
+     * @throws IllegalArgumentException thrown if parameters fail the validation
      * @return the PagedList&lt;DataLakeStoreAccountInfo&gt; object wrapped in {@link ServiceResponse} if successful.
      */
     public Observable<ServiceResponse<Page<DataLakeStoreAccountInfo>>> listByAccountSinglePageAsync(final String resourceGroupName, final String accountName) {
@@ -459,7 +569,7 @@ public final class DataLakeStoreAccountsImpl implements DataLakeStoreAccounts {
                 public Observable<ServiceResponse<Page<DataLakeStoreAccountInfo>>> call(Response<ResponseBody> response) {
                     try {
                         ServiceResponse<PageImpl<DataLakeStoreAccountInfo>> result = listByAccountDelegate(response);
-                        return Observable.just(new ServiceResponse<Page<DataLakeStoreAccountInfo>>(result.getBody(), result.getResponse()));
+                        return Observable.just(new ServiceResponse<Page<DataLakeStoreAccountInfo>>(result.body(), result.response()));
                     } catch (Throwable t) {
                         return Observable.error(t);
                     }
@@ -478,14 +588,17 @@ public final class DataLakeStoreAccountsImpl implements DataLakeStoreAccounts {
      * @param select OData Select statement. Limits the properties on each entry to just those requested, e.g. Categories?$select=CategoryName,Description. Optional.
      * @param orderby OrderBy clause. One or more comma-separated expressions with an optional "asc" (the default) or "desc" depending on the order you'd like the values sorted, e.g. Categories?$orderby=CategoryName desc. Optional.
      * @param count The Boolean value of true or false to request a count of the matching resources included with the resources in the response, e.g. Categories?$count=true. Optional.
+     * @throws IllegalArgumentException thrown if parameters fail the validation
+     * @throws CloudException thrown if the request is rejected by server
+     * @throws RuntimeException all other wrapped checked exceptions if the request fails to be sent
      * @return the PagedList&lt;DataLakeStoreAccountInfo&gt; object if successful.
      */
     public PagedList<DataLakeStoreAccountInfo> listByAccount(final String resourceGroupName, final String accountName, final String filter, final Integer top, final Integer skip, final String select, final String orderby, final Boolean count) {
         ServiceResponse<Page<DataLakeStoreAccountInfo>> response = listByAccountSinglePageAsync(resourceGroupName, accountName, filter, top, skip, select, orderby, count).toBlocking().single();
-        return new PagedList<DataLakeStoreAccountInfo>(response.getBody()) {
+        return new PagedList<DataLakeStoreAccountInfo>(response.body()) {
             @Override
             public Page<DataLakeStoreAccountInfo> nextPage(String nextPageLink) {
-                return listByAccountNextSinglePageAsync(nextPageLink).toBlocking().single().getBody();
+                return listByAccountNextSinglePageAsync(nextPageLink).toBlocking().single().body();
             }
         };
     }
@@ -502,10 +615,11 @@ public final class DataLakeStoreAccountsImpl implements DataLakeStoreAccounts {
      * @param orderby OrderBy clause. One or more comma-separated expressions with an optional "asc" (the default) or "desc" depending on the order you'd like the values sorted, e.g. Categories?$orderby=CategoryName desc. Optional.
      * @param count The Boolean value of true or false to request a count of the matching resources included with the resources in the response, e.g. Categories?$count=true. Optional.
      * @param serviceCallback the async ServiceCallback to handle successful and failed responses.
-     * @return the {@link ServiceCall} object
+     * @throws IllegalArgumentException thrown if parameters fail the validation
+     * @return the {@link ServiceFuture} object
      */
-    public ServiceCall<List<DataLakeStoreAccountInfo>> listByAccountAsync(final String resourceGroupName, final String accountName, final String filter, final Integer top, final Integer skip, final String select, final String orderby, final Boolean count, final ListOperationCallback<DataLakeStoreAccountInfo> serviceCallback) {
-        return AzureServiceCall.create(
+    public ServiceFuture<List<DataLakeStoreAccountInfo>> listByAccountAsync(final String resourceGroupName, final String accountName, final String filter, final Integer top, final Integer skip, final String select, final String orderby, final Boolean count, final ListOperationCallback<DataLakeStoreAccountInfo> serviceCallback) {
+        return AzureServiceFuture.fromPageResponse(
             listByAccountSinglePageAsync(resourceGroupName, accountName, filter, top, skip, select, orderby, count),
             new Func1<String, Observable<ServiceResponse<Page<DataLakeStoreAccountInfo>>>>() {
                 @Override
@@ -527,6 +641,7 @@ public final class DataLakeStoreAccountsImpl implements DataLakeStoreAccounts {
      * @param select OData Select statement. Limits the properties on each entry to just those requested, e.g. Categories?$select=CategoryName,Description. Optional.
      * @param orderby OrderBy clause. One or more comma-separated expressions with an optional "asc" (the default) or "desc" depending on the order you'd like the values sorted, e.g. Categories?$orderby=CategoryName desc. Optional.
      * @param count The Boolean value of true or false to request a count of the matching resources included with the resources in the response, e.g. Categories?$count=true. Optional.
+     * @throws IllegalArgumentException thrown if parameters fail the validation
      * @return the observable to the PagedList&lt;DataLakeStoreAccountInfo&gt; object
      */
     public Observable<Page<DataLakeStoreAccountInfo>> listByAccountAsync(final String resourceGroupName, final String accountName, final String filter, final Integer top, final Integer skip, final String select, final String orderby, final Boolean count) {
@@ -534,7 +649,7 @@ public final class DataLakeStoreAccountsImpl implements DataLakeStoreAccounts {
             .map(new Func1<ServiceResponse<Page<DataLakeStoreAccountInfo>>, Page<DataLakeStoreAccountInfo>>() {
                 @Override
                 public Page<DataLakeStoreAccountInfo> call(ServiceResponse<Page<DataLakeStoreAccountInfo>> response) {
-                    return response.getBody();
+                    return response.body();
                 }
             });
     }
@@ -550,6 +665,7 @@ public final class DataLakeStoreAccountsImpl implements DataLakeStoreAccounts {
      * @param select OData Select statement. Limits the properties on each entry to just those requested, e.g. Categories?$select=CategoryName,Description. Optional.
      * @param orderby OrderBy clause. One or more comma-separated expressions with an optional "asc" (the default) or "desc" depending on the order you'd like the values sorted, e.g. Categories?$orderby=CategoryName desc. Optional.
      * @param count The Boolean value of true or false to request a count of the matching resources included with the resources in the response, e.g. Categories?$count=true. Optional.
+     * @throws IllegalArgumentException thrown if parameters fail the validation
      * @return the observable to the PagedList&lt;DataLakeStoreAccountInfo&gt; object
      */
     public Observable<ServiceResponse<Page<DataLakeStoreAccountInfo>>> listByAccountWithServiceResponseAsync(final String resourceGroupName, final String accountName, final String filter, final Integer top, final Integer skip, final String select, final String orderby, final Boolean count) {
@@ -557,7 +673,7 @@ public final class DataLakeStoreAccountsImpl implements DataLakeStoreAccounts {
             .concatMap(new Func1<ServiceResponse<Page<DataLakeStoreAccountInfo>>, Observable<ServiceResponse<Page<DataLakeStoreAccountInfo>>>>() {
                 @Override
                 public Observable<ServiceResponse<Page<DataLakeStoreAccountInfo>>> call(ServiceResponse<Page<DataLakeStoreAccountInfo>> page) {
-                    String nextPageLink = page.getBody().getNextPageLink();
+                    String nextPageLink = page.body().nextPageLink();
                     if (nextPageLink == null) {
                         return Observable.just(page);
                     }
@@ -577,6 +693,7 @@ public final class DataLakeStoreAccountsImpl implements DataLakeStoreAccounts {
     ServiceResponse<PageImpl<DataLakeStoreAccountInfo>> * @param select OData Select statement. Limits the properties on each entry to just those requested, e.g. Categories?$select=CategoryName,Description. Optional.
     ServiceResponse<PageImpl<DataLakeStoreAccountInfo>> * @param orderby OrderBy clause. One or more comma-separated expressions with an optional "asc" (the default) or "desc" depending on the order you'd like the values sorted, e.g. Categories?$orderby=CategoryName desc. Optional.
     ServiceResponse<PageImpl<DataLakeStoreAccountInfo>> * @param count The Boolean value of true or false to request a count of the matching resources included with the resources in the response, e.g. Categories?$count=true. Optional.
+     * @throws IllegalArgumentException thrown if parameters fail the validation
      * @return the PagedList&lt;DataLakeStoreAccountInfo&gt; object wrapped in {@link ServiceResponse} if successful.
      */
     public Observable<ServiceResponse<Page<DataLakeStoreAccountInfo>>> listByAccountSinglePageAsync(final String resourceGroupName, final String accountName, final String filter, final Integer top, final Integer skip, final String select, final String orderby, final Boolean count) {
@@ -598,7 +715,7 @@ public final class DataLakeStoreAccountsImpl implements DataLakeStoreAccounts {
                 public Observable<ServiceResponse<Page<DataLakeStoreAccountInfo>>> call(Response<ResponseBody> response) {
                     try {
                         ServiceResponse<PageImpl<DataLakeStoreAccountInfo>> result = listByAccountDelegate(response);
-                        return Observable.just(new ServiceResponse<Page<DataLakeStoreAccountInfo>>(result.getBody(), result.getResponse()));
+                        return Observable.just(new ServiceResponse<Page<DataLakeStoreAccountInfo>>(result.body(), result.response()));
                     } catch (Throwable t) {
                         return Observable.error(t);
                     }
@@ -607,7 +724,7 @@ public final class DataLakeStoreAccountsImpl implements DataLakeStoreAccounts {
     }
 
     private ServiceResponse<PageImpl<DataLakeStoreAccountInfo>> listByAccountDelegate(Response<ResponseBody> response) throws CloudException, IOException, IllegalArgumentException {
-        return new AzureServiceResponseBuilder<PageImpl<DataLakeStoreAccountInfo>, CloudException>(this.client.mapperAdapter())
+        return this.client.restClient().responseBuilderFactory().<PageImpl<DataLakeStoreAccountInfo>, CloudException>newInstance(this.client.serializerAdapter())
                 .register(200, new TypeToken<PageImpl<DataLakeStoreAccountInfo>>() { }.getType())
                 .registerError(CloudException.class)
                 .build(response);
@@ -617,14 +734,17 @@ public final class DataLakeStoreAccountsImpl implements DataLakeStoreAccounts {
      * Gets the first page of Data Lake Store accounts linked to the specified Data Lake Analytics account. The response includes a link to the next page, if any.
      *
      * @param nextPageLink The NextLink from the previous successful call to List operation.
+     * @throws IllegalArgumentException thrown if parameters fail the validation
+     * @throws CloudException thrown if the request is rejected by server
+     * @throws RuntimeException all other wrapped checked exceptions if the request fails to be sent
      * @return the PagedList&lt;DataLakeStoreAccountInfo&gt; object if successful.
      */
     public PagedList<DataLakeStoreAccountInfo> listByAccountNext(final String nextPageLink) {
         ServiceResponse<Page<DataLakeStoreAccountInfo>> response = listByAccountNextSinglePageAsync(nextPageLink).toBlocking().single();
-        return new PagedList<DataLakeStoreAccountInfo>(response.getBody()) {
+        return new PagedList<DataLakeStoreAccountInfo>(response.body()) {
             @Override
             public Page<DataLakeStoreAccountInfo> nextPage(String nextPageLink) {
-                return listByAccountNextSinglePageAsync(nextPageLink).toBlocking().single().getBody();
+                return listByAccountNextSinglePageAsync(nextPageLink).toBlocking().single().body();
             }
         };
     }
@@ -633,12 +753,13 @@ public final class DataLakeStoreAccountsImpl implements DataLakeStoreAccounts {
      * Gets the first page of Data Lake Store accounts linked to the specified Data Lake Analytics account. The response includes a link to the next page, if any.
      *
      * @param nextPageLink The NextLink from the previous successful call to List operation.
-     * @param serviceCall the ServiceCall object tracking the Retrofit calls
+     * @param serviceFuture the ServiceFuture object tracking the Retrofit calls
      * @param serviceCallback the async ServiceCallback to handle successful and failed responses.
-     * @return the {@link ServiceCall} object
+     * @throws IllegalArgumentException thrown if parameters fail the validation
+     * @return the {@link ServiceFuture} object
      */
-    public ServiceCall<List<DataLakeStoreAccountInfo>> listByAccountNextAsync(final String nextPageLink, final ServiceCall<List<DataLakeStoreAccountInfo>> serviceCall, final ListOperationCallback<DataLakeStoreAccountInfo> serviceCallback) {
-        return AzureServiceCall.create(
+    public ServiceFuture<List<DataLakeStoreAccountInfo>> listByAccountNextAsync(final String nextPageLink, final ServiceFuture<List<DataLakeStoreAccountInfo>> serviceFuture, final ListOperationCallback<DataLakeStoreAccountInfo> serviceCallback) {
+        return AzureServiceFuture.fromPageResponse(
             listByAccountNextSinglePageAsync(nextPageLink),
             new Func1<String, Observable<ServiceResponse<Page<DataLakeStoreAccountInfo>>>>() {
                 @Override
@@ -653,6 +774,7 @@ public final class DataLakeStoreAccountsImpl implements DataLakeStoreAccounts {
      * Gets the first page of Data Lake Store accounts linked to the specified Data Lake Analytics account. The response includes a link to the next page, if any.
      *
      * @param nextPageLink The NextLink from the previous successful call to List operation.
+     * @throws IllegalArgumentException thrown if parameters fail the validation
      * @return the observable to the PagedList&lt;DataLakeStoreAccountInfo&gt; object
      */
     public Observable<Page<DataLakeStoreAccountInfo>> listByAccountNextAsync(final String nextPageLink) {
@@ -660,7 +782,7 @@ public final class DataLakeStoreAccountsImpl implements DataLakeStoreAccounts {
             .map(new Func1<ServiceResponse<Page<DataLakeStoreAccountInfo>>, Page<DataLakeStoreAccountInfo>>() {
                 @Override
                 public Page<DataLakeStoreAccountInfo> call(ServiceResponse<Page<DataLakeStoreAccountInfo>> response) {
-                    return response.getBody();
+                    return response.body();
                 }
             });
     }
@@ -669,6 +791,7 @@ public final class DataLakeStoreAccountsImpl implements DataLakeStoreAccounts {
      * Gets the first page of Data Lake Store accounts linked to the specified Data Lake Analytics account. The response includes a link to the next page, if any.
      *
      * @param nextPageLink The NextLink from the previous successful call to List operation.
+     * @throws IllegalArgumentException thrown if parameters fail the validation
      * @return the observable to the PagedList&lt;DataLakeStoreAccountInfo&gt; object
      */
     public Observable<ServiceResponse<Page<DataLakeStoreAccountInfo>>> listByAccountNextWithServiceResponseAsync(final String nextPageLink) {
@@ -676,7 +799,7 @@ public final class DataLakeStoreAccountsImpl implements DataLakeStoreAccounts {
             .concatMap(new Func1<ServiceResponse<Page<DataLakeStoreAccountInfo>>, Observable<ServiceResponse<Page<DataLakeStoreAccountInfo>>>>() {
                 @Override
                 public Observable<ServiceResponse<Page<DataLakeStoreAccountInfo>>> call(ServiceResponse<Page<DataLakeStoreAccountInfo>> page) {
-                    String nextPageLink = page.getBody().getNextPageLink();
+                    String nextPageLink = page.body().nextPageLink();
                     if (nextPageLink == null) {
                         return Observable.just(page);
                     }
@@ -689,19 +812,21 @@ public final class DataLakeStoreAccountsImpl implements DataLakeStoreAccounts {
      * Gets the first page of Data Lake Store accounts linked to the specified Data Lake Analytics account. The response includes a link to the next page, if any.
      *
     ServiceResponse<PageImpl<DataLakeStoreAccountInfo>> * @param nextPageLink The NextLink from the previous successful call to List operation.
+     * @throws IllegalArgumentException thrown if parameters fail the validation
      * @return the PagedList&lt;DataLakeStoreAccountInfo&gt; object wrapped in {@link ServiceResponse} if successful.
      */
     public Observable<ServiceResponse<Page<DataLakeStoreAccountInfo>>> listByAccountNextSinglePageAsync(final String nextPageLink) {
         if (nextPageLink == null) {
             throw new IllegalArgumentException("Parameter nextPageLink is required and cannot be null.");
         }
-        return service.listByAccountNext(nextPageLink, this.client.acceptLanguage(), this.client.userAgent())
+        String nextUrl = String.format("%s", nextPageLink);
+        return service.listByAccountNext(nextUrl, this.client.acceptLanguage(), this.client.userAgent())
             .flatMap(new Func1<Response<ResponseBody>, Observable<ServiceResponse<Page<DataLakeStoreAccountInfo>>>>() {
                 @Override
                 public Observable<ServiceResponse<Page<DataLakeStoreAccountInfo>>> call(Response<ResponseBody> response) {
                     try {
                         ServiceResponse<PageImpl<DataLakeStoreAccountInfo>> result = listByAccountNextDelegate(response);
-                        return Observable.just(new ServiceResponse<Page<DataLakeStoreAccountInfo>>(result.getBody(), result.getResponse()));
+                        return Observable.just(new ServiceResponse<Page<DataLakeStoreAccountInfo>>(result.body(), result.response()));
                     } catch (Throwable t) {
                         return Observable.error(t);
                     }
@@ -710,7 +835,7 @@ public final class DataLakeStoreAccountsImpl implements DataLakeStoreAccounts {
     }
 
     private ServiceResponse<PageImpl<DataLakeStoreAccountInfo>> listByAccountNextDelegate(Response<ResponseBody> response) throws CloudException, IOException, IllegalArgumentException {
-        return new AzureServiceResponseBuilder<PageImpl<DataLakeStoreAccountInfo>, CloudException>(this.client.mapperAdapter())
+        return this.client.restClient().responseBuilderFactory().<PageImpl<DataLakeStoreAccountInfo>, CloudException>newInstance(this.client.serializerAdapter())
                 .register(200, new TypeToken<PageImpl<DataLakeStoreAccountInfo>>() { }.getType())
                 .registerError(CloudException.class)
                 .build(response);

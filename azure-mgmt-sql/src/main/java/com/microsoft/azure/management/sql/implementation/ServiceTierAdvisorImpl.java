@@ -9,11 +9,13 @@ package com.microsoft.azure.management.sql.implementation;
 import com.microsoft.azure.management.apigeneration.LangDefinition;
 import com.microsoft.azure.management.resources.fluentcore.arm.ResourceId;
 import com.microsoft.azure.management.resources.fluentcore.arm.collection.implementation.ReadableWrappersImpl;
-import com.microsoft.azure.management.resources.fluentcore.model.implementation.WrapperImpl;
+import com.microsoft.azure.management.resources.fluentcore.model.implementation.RefreshableWrapperImpl;
 import com.microsoft.azure.management.resources.fluentcore.utils.PagedListConverter;
 import com.microsoft.azure.management.sql.ServiceTierAdvisor;
 import com.microsoft.azure.management.sql.SloUsageMetric;
+import com.microsoft.azure.management.sql.SloUsageMetricInterface;
 import org.joda.time.DateTime;
+import rx.Observable;
 
 import java.util.List;
 import java.util.UUID;
@@ -23,15 +25,15 @@ import java.util.UUID;
  */
 @LangDefinition
 class ServiceTierAdvisorImpl
-        extends WrapperImpl<ServiceTierAdvisorInner>
+        extends RefreshableWrapperImpl<ServiceTierAdvisorInner, ServiceTierAdvisor>
         implements ServiceTierAdvisor {
     private final ResourceId resourceId;
     private final DatabasesInner databasesInner;
-    private List<SloUsageMetric> sloUsageMetrics;
+    private List<SloUsageMetricInterface> sloUsageMetrics;
 
     protected ServiceTierAdvisorImpl(ServiceTierAdvisorInner innerObject, DatabasesInner databasesInner) {
         super(innerObject);
-        this.resourceId = ResourceId.parseResourceId(this.inner().id());
+        this.resourceId = ResourceId.fromString(this.inner().id());
         this.databasesInner = databasesInner;
     }
 
@@ -97,11 +99,11 @@ class ServiceTierAdvisorImpl
     }
 
     @Override
-    public List<SloUsageMetric> serviceLevelObjectiveUsageMetrics() {
+    public List<SloUsageMetricInterface> serviceLevelObjectiveUsageMetrics() {
         if (sloUsageMetrics == null) {
-            PagedListConverter<SloUsageMetricInner, SloUsageMetric> converter = new PagedListConverter<SloUsageMetricInner, SloUsageMetric>() {
+            PagedListConverter<SloUsageMetric, SloUsageMetricInterface> converter = new PagedListConverter<SloUsageMetric, SloUsageMetricInterface>() {
                 @Override
-                public SloUsageMetric typeConvert(SloUsageMetricInner sloUsageMetricInner) {
+                public SloUsageMetricInterface typeConvert(SloUsageMetric sloUsageMetricInner) {
 
                     return new SloUsageMetricImpl(sloUsageMetricInner);
                 }
@@ -168,9 +170,9 @@ class ServiceTierAdvisorImpl
     }
 
     @Override
-    public ServiceTierAdvisor refresh() {
+    protected Observable<ServiceTierAdvisorInner> getInnerAsync() {
         sloUsageMetrics = null;
-        this.setInner(this.databasesInner.getServiceTierAdvisor(this.resourceGroupName(), this.sqlServerName(), this.databaseName(), this.name()));
-        return this;
+
+        return this.databasesInner.getServiceTierAdvisorAsync(this.resourceGroupName(), this.sqlServerName(), this.databaseName(), this.name());
     }
 }

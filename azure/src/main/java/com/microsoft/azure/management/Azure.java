@@ -6,23 +6,43 @@
 
 package com.microsoft.azure.management;
 
+import com.microsoft.azure.AzureEnvironment;
+import com.microsoft.azure.AzureResponseBuilder;
 import com.microsoft.azure.CloudException;
 import com.microsoft.azure.PagedList;
-import com.microsoft.azure.RestClient;
 import com.microsoft.azure.credentials.ApplicationTokenCredentials;
 import com.microsoft.azure.credentials.AzureTokenCredentials;
+import com.microsoft.azure.management.apigeneration.Beta;
+import com.microsoft.azure.management.apigeneration.Beta.SinceVersion;
+import com.microsoft.azure.management.appservice.WebApps;
+import com.microsoft.azure.management.appservice.implementation.AppServiceManager;
 import com.microsoft.azure.management.batch.BatchAccounts;
 import com.microsoft.azure.management.batch.implementation.BatchManager;
 import com.microsoft.azure.management.cdn.CdnProfiles;
 import com.microsoft.azure.management.cdn.implementation.CdnManager;
 import com.microsoft.azure.management.compute.AvailabilitySets;
 import com.microsoft.azure.management.compute.ComputeUsages;
+import com.microsoft.azure.management.compute.ContainerServices;
+import com.microsoft.azure.management.compute.Disks;
+import com.microsoft.azure.management.compute.Snapshots;
+import com.microsoft.azure.management.compute.VirtualMachineCustomImages;
 import com.microsoft.azure.management.compute.VirtualMachineImages;
 import com.microsoft.azure.management.compute.VirtualMachineScaleSets;
 import com.microsoft.azure.management.compute.VirtualMachines;
 import com.microsoft.azure.management.compute.implementation.ComputeManager;
+import com.microsoft.azure.management.containerregistry.Registries;
+import com.microsoft.azure.management.containerregistry.implementation.ContainerRegistryManager;
 import com.microsoft.azure.management.dns.DnsZones;
 import com.microsoft.azure.management.dns.implementation.DnsZoneManager;
+import com.microsoft.azure.management.documentdb.DocumentDBAccounts;
+import com.microsoft.azure.management.documentdb.implementation.DocumentDBManager;
+import com.microsoft.azure.management.graphrbac.ActiveDirectoryGroups;
+import com.microsoft.azure.management.graphrbac.ActiveDirectoryUsers;
+import com.microsoft.azure.management.graphrbac.ActiveDirectoryApplications;
+import com.microsoft.azure.management.graphrbac.RoleAssignments;
+import com.microsoft.azure.management.graphrbac.RoleDefinitions;
+import com.microsoft.azure.management.graphrbac.ServicePrincipals;
+import com.microsoft.azure.management.graphrbac.implementation.GraphRbacManager;
 import com.microsoft.azure.management.keyvault.Vaults;
 import com.microsoft.azure.management.keyvault.implementation.KeyVaultManager;
 import com.microsoft.azure.management.network.ApplicationGateways;
@@ -31,7 +51,7 @@ import com.microsoft.azure.management.network.NetworkInterfaces;
 import com.microsoft.azure.management.network.NetworkSecurityGroups;
 import com.microsoft.azure.management.network.NetworkUsages;
 import com.microsoft.azure.management.network.Networks;
-import com.microsoft.azure.management.network.PublicIpAddresses;
+import com.microsoft.azure.management.network.PublicIPAddresses;
 import com.microsoft.azure.management.network.RouteTables;
 import com.microsoft.azure.management.network.implementation.NetworkManager;
 import com.microsoft.azure.management.redis.RedisCaches;
@@ -48,8 +68,11 @@ import com.microsoft.azure.management.resources.Subscriptions;
 import com.microsoft.azure.management.resources.Tenants;
 import com.microsoft.azure.management.resources.fluentcore.arm.AzureConfigurable;
 import com.microsoft.azure.management.resources.fluentcore.arm.implementation.AzureConfigurableImpl;
+import com.microsoft.azure.management.resources.fluentcore.utils.ProviderRegistrationInterceptor;
 import com.microsoft.azure.management.resources.implementation.ResourceManagementClientImpl;
 import com.microsoft.azure.management.resources.implementation.ResourceManager;
+import com.microsoft.azure.management.servicebus.ServiceBusNamespaces;
+import com.microsoft.azure.management.servicebus.implementation.ServiceBusManager;
 import com.microsoft.azure.management.sql.SqlServers;
 import com.microsoft.azure.management.sql.implementation.SqlServerManager;
 import com.microsoft.azure.management.storage.StorageAccounts;
@@ -57,6 +80,8 @@ import com.microsoft.azure.management.storage.Usages;
 import com.microsoft.azure.management.storage.implementation.StorageManager;
 import com.microsoft.azure.management.trafficmanager.TrafficManagerProfiles;
 import com.microsoft.azure.management.trafficmanager.implementation.TrafficManager;
+import com.microsoft.azure.serializer.AzureJacksonAdapter;
+import com.microsoft.rest.RestClient;
 
 import java.io.File;
 import java.io.IOException;
@@ -75,8 +100,13 @@ public final class Azure {
     private final RedisManager redisManager;
     private final CdnManager cdnManager;
     private final DnsZoneManager dnsZoneManager;
+    private final AppServiceManager appServiceManager;
     private final SqlServerManager sqlServerManager;
+    private final ServiceBusManager serviceBusManager;
+    private final ContainerRegistryManager containerRegistryManager;
+    private final DocumentDBManager documentDBManager;
     private final String subscriptionId;
+    private final Authenticated authenticated;
 
     /**
      * Authenticate to Azure using an Azure credentials object.
@@ -85,10 +115,13 @@ public final class Azure {
      * @return the authenticated Azure client
      */
     public static Authenticated authenticate(AzureTokenCredentials credentials) {
-        return new AuthenticatedImpl(
-                credentials.getEnvironment().newRestClientBuilder()
-                        .withCredentials(credentials)
-                        .build(), credentials.getDomain());
+        return new AuthenticatedImpl(new RestClient.Builder()
+                .withBaseUrl(credentials.environment(), AzureEnvironment.Endpoint.RESOURCE_MANAGER)
+                .withCredentials(credentials)
+                .withSerializerAdapter(new AzureJacksonAdapter())
+                .withResponseBuilderFactory(new AzureResponseBuilder.Factory())
+                .withInterceptor(new ProviderRegistrationInterceptor(credentials))
+                .build(), credentials.domain());
     }
 
     /**
@@ -109,9 +142,13 @@ public final class Azure {
      */
     public static Authenticated authenticate(File credentialsFile) throws IOException {
         ApplicationTokenCredentials credentials = ApplicationTokenCredentials.fromFile(credentialsFile);
-        return new AuthenticatedImpl(credentials.getEnvironment().newRestClientBuilder()
+        return new AuthenticatedImpl(new RestClient.Builder()
+                .withBaseUrl(credentials.environment(), AzureEnvironment.Endpoint.RESOURCE_MANAGER)
                 .withCredentials(credentials)
-                .build(), credentials.getDomain()).withDefaultSubscription(credentials.defaultSubscriptionId());
+                .withSerializerAdapter(new AzureJacksonAdapter())
+                .withResponseBuilderFactory(new AzureResponseBuilder.Factory())
+                .withInterceptor(new ProviderRegistrationInterceptor(credentials))
+                .build(), credentials.domain()).withDefaultSubscription(credentials.defaultSubscriptionId());
     }
 
     /**
@@ -124,7 +161,14 @@ public final class Azure {
         return new AuthenticatedImpl(restClient, tenantId);
     }
 
-    private static Authenticated authenticate(RestClient restClient, String tenantId, String subscriptionId) throws IOException {
+    /**
+     * Authenticates API access using a {@link RestClient} instance.
+     * @param restClient the {@link RestClient} configured with Azure authentication credentials
+     * @param tenantId the tenantId in Active Directory
+     * @param subscriptionId the ID of the subscription
+     * @return authenticated Azure client
+     */
+    public static Authenticated authenticate(RestClient restClient, String tenantId, String subscriptionId) {
         return new AuthenticatedImpl(restClient, tenantId).withDefaultSubscription(subscriptionId);
     }
 
@@ -164,13 +208,13 @@ public final class Azure {
     private static final class ConfigurableImpl extends AzureConfigurableImpl<Configurable> implements Configurable {
         @Override
         public Authenticated authenticate(AzureTokenCredentials credentials) {
-            return Azure.authenticate(buildRestClient(credentials), credentials.getDomain());
+            return Azure.authenticate(buildRestClient(credentials), credentials.domain());
         }
 
         @Override
         public Authenticated authenticate(File credentialsFile) throws IOException {
             ApplicationTokenCredentials credentials = ApplicationTokenCredentials.fromFile(credentialsFile);
-            return Azure.authenticate(buildRestClient(credentials), credentials.getDomain(), credentials.defaultSubscriptionId());
+            return Azure.authenticate(buildRestClient(credentials), credentials.domain(), credentials.defaultSubscriptionId());
         }
     }
 
@@ -196,6 +240,54 @@ public final class Azure {
          * @return Tenants interface providing access to tenant management
          */
         Tenants tenants();
+
+        /**
+         * Entry point to AD user management APIs.
+         *
+         * @return ActiveDirectoryUsers interface providing access to tenant management
+         */
+        @Beta(SinceVersion.V1_1_0)
+        ActiveDirectoryUsers activeDirectoryUsers();
+
+        /**
+         * Entry point to AD group management APIs.
+         *
+         * @return ActiveDirectoryGroups interface providing access to tenant management
+         */
+        @Beta(SinceVersion.V1_1_0)
+        ActiveDirectoryGroups activeDirectoryGroups();
+
+        /**
+         * Entry point to AD service principal management APIs.
+         *
+         * @return ServicePrincipals interface providing access to tenant management
+         */
+        @Beta(SinceVersion.V1_1_0)
+        ServicePrincipals servicePrincipals();
+
+        /**
+         * Entry point to AD application management APIs.
+         *
+         * @return Applications interface providing access to tenant management
+         */
+        @Beta(SinceVersion.V1_1_0)
+        ActiveDirectoryApplications activeDirectoryApplications();
+
+        /**
+         * Entry point to role definition management APIs.
+         *
+         * @return RoleDefinitions interface providing access to tenant management
+         */
+        @Beta(SinceVersion.V1_1_0)
+        RoleDefinitions roleDefinitions();
+
+        /**
+         * Entry point to role assignment management APIs.
+         *
+         * @return RoleAssignments interface providing access to tenant management
+         */
+        @Beta(SinceVersion.V1_1_0)
+        RoleAssignments roleAssignments();
 
         /**
          * Selects a specific subscription for the APIs to work with.
@@ -225,16 +317,18 @@ public final class Azure {
     private static final class AuthenticatedImpl implements Authenticated {
         private final RestClient restClient;
         private final ResourceManager.Authenticated resourceManagerAuthenticated;
+        private final GraphRbacManager graphRbacManager;
         private String defaultSubscription;
         private String tenantId;
 
         private AuthenticatedImpl(RestClient restClient, String tenantId) {
             this.resourceManagerAuthenticated = ResourceManager.authenticate(restClient);
+            this.graphRbacManager = GraphRbacManager.authenticate(restClient, tenantId);
             this.restClient = restClient;
             this.tenantId = tenantId;
         }
 
-        private AuthenticatedImpl withDefaultSubscription(String subscriptionId) throws IOException {
+        private AuthenticatedImpl withDefaultSubscription(String subscriptionId) {
             this.defaultSubscription = subscriptionId;
             return this;
         }
@@ -250,8 +344,38 @@ public final class Azure {
         }
 
         @Override
+        public ActiveDirectoryUsers activeDirectoryUsers() {
+            return graphRbacManager.users();
+        }
+
+        @Override
+        public ActiveDirectoryGroups activeDirectoryGroups() {
+            return graphRbacManager.groups();
+        }
+
+        @Override
+        public ServicePrincipals servicePrincipals() {
+            return graphRbacManager.servicePrincipals();
+        }
+
+        @Override
+        public ActiveDirectoryApplications activeDirectoryApplications() {
+            return graphRbacManager.applications();
+        }
+
+        @Override
+        public RoleDefinitions roleDefinitions() {
+            return graphRbacManager.roleDefinitions();
+        }
+
+        @Override
+        public RoleAssignments roleAssignments() {
+            return graphRbacManager.roleAssignments();
+        }
+
+        @Override
         public Azure withSubscription(String subscriptionId) {
-            return new Azure(restClient, subscriptionId, tenantId);
+            return new Azure(restClient, subscriptionId, tenantId, this);
         }
 
         @Override
@@ -269,7 +393,7 @@ public final class Azure {
         }
     }
 
-    private Azure(RestClient restClient, String subscriptionId, String tenantId) {
+    private Azure(RestClient restClient, String subscriptionId, String tenantId, Authenticated authenticated) {
         ResourceManagementClientImpl resourceManagementClient = new ResourceManagementClientImpl(restClient);
         resourceManagementClient.withSubscriptionId(subscriptionId);
         this.resourceManager = ResourceManager.authenticate(restClient).withSubscription(subscriptionId);
@@ -282,15 +406,34 @@ public final class Azure {
         this.redisManager = RedisManager.authenticate(restClient, subscriptionId);
         this.cdnManager = CdnManager.authenticate(restClient, subscriptionId);
         this.dnsZoneManager = DnsZoneManager.authenticate(restClient, subscriptionId);
+        this.appServiceManager = AppServiceManager.authenticate(restClient, tenantId, subscriptionId);
         this.sqlServerManager = SqlServerManager.authenticate(restClient, subscriptionId);
+        this.serviceBusManager = ServiceBusManager.authenticate(restClient, subscriptionId);
+        this.containerRegistryManager = ContainerRegistryManager.authenticate(restClient, subscriptionId);
+        this.documentDBManager = DocumentDBManager.authenticate(restClient, subscriptionId);
         this.subscriptionId = subscriptionId;
+        this.authenticated = authenticated;
     }
 
     /**
-     * @return the currently selected subscription ID this client is configured to work with
+     * @return the currently selected subscription ID this client is authenticated to work with
      */
     public String subscriptionId() {
         return this.subscriptionId;
+    }
+
+    /**
+     * @return the currently selected subscription this client is authenticated to work with
+     */
+    public Subscription getCurrentSubscription() {
+        return this.subscriptions().getById(this.subscriptionId());
+    }
+
+    /**
+     * @return subscriptions that this authenticated client has access to
+     */
+    public Subscriptions subscriptions() {
+        return this.authenticated.subscriptions();
     }
 
     /**
@@ -427,10 +570,31 @@ public final class Azure {
     }
 
     /**
+     * @return entry point to managing virtual machine custom images
+     */
+    public VirtualMachineCustomImages virtualMachineCustomImages() {
+        return computeManager.virtualMachineCustomImages();
+    }
+
+    /**
+     * @return entry point to managing managed disks
+     */
+    public Disks disks() {
+        return computeManager.disks();
+    }
+
+    /**
+     * @return entry point to managing managed snapshots
+     */
+    public Snapshots snapshots() {
+        return computeManager.snapshots();
+    }
+
+    /**
      * @return entry point to managing public IP addresses
      */
-    public PublicIpAddresses publicIpAddresses() {
-        return this.networkManager.publicIpAddresses();
+    public PublicIPAddresses publicIPAddresses() {
+        return this.networkManager.publicIPAddresses();
     }
 
     /**
@@ -483,10 +647,26 @@ public final class Azure {
     }
 
     /**
-     * @return entry point to managing Dns zones.
+     * @return entry point to managing DNS zones.
      */
     public DnsZones dnsZones() {
         return dnsZoneManager.zones();
+    }
+
+    /**
+     * @return entry point to managing web apps.
+     */
+    @Beta
+    public WebApps webApps() {
+        return appServiceManager.webApps();
+    }
+
+    /**
+     * @return entry point to managing app services.
+     */
+    @Beta
+    public AppServiceManager appServices() {
+        return appServiceManager;
     }
 
     /**
@@ -494,5 +674,46 @@ public final class Azure {
      */
     public SqlServers sqlServers() {
         return sqlServerManager.sqlServers();
+    }
+
+    /**
+     * @return entry point to managing Service Bus.
+     */
+    @Beta
+    public ServiceBusNamespaces serviceBusNamespaces() {
+        return serviceBusManager.namespaces();
+    }
+
+    /**
+     * @return entry point to managing Service Bus operations.
+     */
+    // TODO: To be revisited in the future
+    //@Beta(SinceVersion.V1_1_0)
+    //public ServiceBusOperations serviceBusOperations() {
+    //    return serviceBusManager.operations();
+    //}
+
+    /**
+     * @return entry point to managing Container Services.
+     */
+    @Beta(SinceVersion.V1_1_0)
+    public ContainerServices containerServices() {
+        return computeManager.containerServices();
+    }
+
+    /**
+     * @return entry point to managing Container Registries.
+     */
+    @Beta(SinceVersion.V1_1_0)
+    public Registries containerRegistries() {
+        return containerRegistryManager.containerRegistries();
+    }
+
+    /**
+     * @return entry point to managing Container Regsitries.
+     */
+    @Beta(SinceVersion.V1_1_0)
+    public DocumentDBAccounts documentDBs() {
+        return documentDBManager.databaseAccounts();
     }
 }

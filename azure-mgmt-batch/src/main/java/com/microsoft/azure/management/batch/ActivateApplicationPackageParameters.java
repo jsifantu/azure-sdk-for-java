@@ -11,13 +11,13 @@ package com.microsoft.azure.management.batch;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
- * Parameters for an ApplicationOperations.ActivateApplicationPackage request.
+ * Parameters for an activating an application package.
  */
 public class ActivateApplicationPackageParameters {
     /**
      * The format of the application package binary file.
      */
-    @JsonProperty(required = true)
+    @JsonProperty(value = "format", required = true)
     private String format;
 
     /**

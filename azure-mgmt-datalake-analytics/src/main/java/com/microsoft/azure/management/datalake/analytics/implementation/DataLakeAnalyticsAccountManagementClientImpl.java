@@ -11,16 +11,18 @@ package com.microsoft.azure.management.datalake.analytics.implementation;
 import com.microsoft.azure.AzureClient;
 import com.microsoft.azure.AzureServiceClient;
 import com.microsoft.azure.management.datalake.analytics.Accounts;
+import com.microsoft.azure.management.datalake.analytics.ComputePolicies;
 import com.microsoft.azure.management.datalake.analytics.DataLakeAnalyticsAccountManagementClient;
 import com.microsoft.azure.management.datalake.analytics.DataLakeStoreAccounts;
+import com.microsoft.azure.management.datalake.analytics.FirewallRules;
 import com.microsoft.azure.management.datalake.analytics.StorageAccounts;
-import com.microsoft.azure.RestClient;
 import com.microsoft.rest.credentials.ServiceClientCredentials;
+import com.microsoft.rest.RestClient;
 
 /**
  * Initializes a new instance of the DataLakeAnalyticsAccountManagementClientImpl class.
  */
-public final class DataLakeAnalyticsAccountManagementClientImpl extends AzureServiceClient implements DataLakeAnalyticsAccountManagementClient {
+public class DataLakeAnalyticsAccountManagementClientImpl extends AzureServiceClient implements DataLakeAnalyticsAccountManagementClient {
     /** the {@link AzureClient} used for long running operations. */
     private AzureClient azureClient;
 
@@ -137,6 +139,32 @@ public final class DataLakeAnalyticsAccountManagementClientImpl extends AzureSer
     }
 
     /**
+     * The ComputePolicies object to access its operations.
+     */
+    private ComputePolicies computePolicies;
+
+    /**
+     * Gets the ComputePolicies object to access its operations.
+     * @return the ComputePolicies object.
+     */
+    public ComputePolicies computePolicies() {
+        return this.computePolicies;
+    }
+
+    /**
+     * The FirewallRules object to access its operations.
+     */
+    private FirewallRules firewallRules;
+
+    /**
+     * Gets the FirewallRules object to access its operations.
+     * @return the FirewallRules object.
+     */
+    public FirewallRules firewallRules() {
+        return this.firewallRules;
+    }
+
+    /**
      * The StorageAccounts object to access its operations.
      */
     private StorageAccounts storageAccounts;
@@ -191,10 +219,8 @@ public final class DataLakeAnalyticsAccountManagementClientImpl extends AzureSer
      * @param credentials the management credentials for Azure
      */
     public DataLakeAnalyticsAccountManagementClientImpl(String baseUrl, ServiceClientCredentials credentials) {
-        this(new RestClient.Builder()
-                .withBaseUrl(baseUrl)
-                .withCredentials(credentials)
-                .build());
+        super(baseUrl, credentials);
+        initialize();
     }
 
     /**
@@ -212,6 +238,8 @@ public final class DataLakeAnalyticsAccountManagementClientImpl extends AzureSer
         this.acceptLanguage = "en-US";
         this.longRunningOperationRetryTimeout = 30;
         this.generateClientRequestId = true;
+        this.computePolicies = new ComputePoliciesImpl(restClient().retrofit(), this);
+        this.firewallRules = new FirewallRulesImpl(restClient().retrofit(), this);
         this.storageAccounts = new StorageAccountsImpl(restClient().retrofit(), this);
         this.dataLakeStoreAccounts = new DataLakeStoreAccountsImpl(restClient().retrofit(), this);
         this.accounts = new AccountsImpl(restClient().retrofit(), this);
@@ -225,8 +253,6 @@ public final class DataLakeAnalyticsAccountManagementClientImpl extends AzureSer
      */
     @Override
     public String userAgent() {
-        return String.format("Azure-SDK-For-Java/%s (%s)",
-                getClass().getPackage().getImplementationVersion(),
-                "DataLakeAnalyticsAccountManagementClient, 2016-11-01");
+        return String.format("%s (%s, %s)", super.userAgent(), "DataLakeAnalyticsAccountManagementClient", "2016-11-01");
     }
 }

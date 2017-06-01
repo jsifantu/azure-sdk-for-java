@@ -5,14 +5,11 @@
  */
 package com.microsoft.azure.management.network.implementation;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import com.microsoft.azure.RestClient;
+import com.microsoft.azure.AzureEnvironment;
+import com.microsoft.azure.AzureResponseBuilder;
+import com.microsoft.azure.SubResource;
 import com.microsoft.azure.credentials.AzureTokenCredentials;
+import com.microsoft.azure.management.apigeneration.Beta;
 import com.microsoft.azure.management.network.ApplicationGateways;
 import com.microsoft.azure.management.network.LoadBalancers;
 import com.microsoft.azure.management.network.Network;
@@ -20,13 +17,22 @@ import com.microsoft.azure.management.network.NetworkInterfaces;
 import com.microsoft.azure.management.network.NetworkSecurityGroups;
 import com.microsoft.azure.management.network.NetworkUsages;
 import com.microsoft.azure.management.network.Networks;
-import com.microsoft.azure.management.network.PublicIpAddresses;
+import com.microsoft.azure.management.network.PublicIPAddresses;
 import com.microsoft.azure.management.network.RouteTables;
 import com.microsoft.azure.management.network.Subnet;
 import com.microsoft.azure.management.resources.fluentcore.arm.AzureConfigurable;
 import com.microsoft.azure.management.resources.fluentcore.arm.ResourceUtils;
 import com.microsoft.azure.management.resources.fluentcore.arm.implementation.AzureConfigurableImpl;
 import com.microsoft.azure.management.resources.fluentcore.arm.implementation.Manager;
+import com.microsoft.azure.management.resources.fluentcore.utils.ProviderRegistrationInterceptor;
+import com.microsoft.azure.serializer.AzureJacksonAdapter;
+import com.microsoft.rest.RestClient;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Entry point to Azure network management.
@@ -34,7 +40,7 @@ import com.microsoft.azure.management.resources.fluentcore.arm.implementation.Ma
 public final class NetworkManager extends Manager<NetworkManager, NetworkManagementClientImpl> {
 
     // Collections
-    private PublicIpAddresses publicIpAddresses;
+    private PublicIPAddresses publicIPAddresses;
     private Networks networks;
     private NetworkSecurityGroups networkSecurityGroups;
     private NetworkInterfaces networkInterfaces;
@@ -61,8 +67,12 @@ public final class NetworkManager extends Manager<NetworkManager, NetworkManagem
      * @return the NetworkManager
      */
     public static NetworkManager authenticate(AzureTokenCredentials credentials, String subscriptionId) {
-        return new NetworkManager(credentials.getEnvironment().newRestClientBuilder()
+        return new NetworkManager(new RestClient.Builder()
+                .withBaseUrl(credentials.environment(), AzureEnvironment.Endpoint.RESOURCE_MANAGER)
                 .withCredentials(credentials)
+                .withSerializerAdapter(new AzureJacksonAdapter())
+                .withResponseBuilderFactory(new AzureResponseBuilder.Factory())
+                .withInterceptor(new ProviderRegistrationInterceptor(credentials))
                 .build(), subscriptionId);
     }
 
@@ -115,9 +125,7 @@ public final class NetworkManager extends Manager<NetworkManager, NetworkManagem
      */
     public RouteTables routeTables() {
         if (this.routeTables == null) {
-            this.routeTables = new RouteTablesImpl(
-                    super.innerManagementClient,
-                    this);
+            this.routeTables = new RouteTablesImpl(this);
         }
         return this.routeTables;
     }
@@ -127,9 +135,7 @@ public final class NetworkManager extends Manager<NetworkManager, NetworkManagem
      */
     public Networks networks() {
         if (this.networks == null) {
-            this.networks = new NetworksImpl(
-                    super.innerManagementClient,
-                    this);
+            this.networks = new NetworksImpl(this);
         }
         return this.networks;
     }
@@ -139,9 +145,7 @@ public final class NetworkManager extends Manager<NetworkManager, NetworkManagem
      */
     public NetworkSecurityGroups networkSecurityGroups() {
         if (this.networkSecurityGroups == null) {
-            this.networkSecurityGroups = new NetworkSecurityGroupsImpl(
-                    super.innerManagementClient.networkSecurityGroups(),
-                    this);
+            this.networkSecurityGroups = new NetworkSecurityGroupsImpl(this);
         }
         return this.networkSecurityGroups;
     }
@@ -149,13 +153,11 @@ public final class NetworkManager extends Manager<NetworkManager, NetworkManagem
     /**
      * @return entry point to public IP address management
      */
-    public PublicIpAddresses publicIpAddresses() {
-        if (this.publicIpAddresses == null) {
-            this.publicIpAddresses = new PublicIpAddressesImpl(
-                    super.innerManagementClient.publicIPAddresses(),
-                    this);
+    public PublicIPAddresses publicIPAddresses() {
+        if (this.publicIPAddresses == null) {
+            this.publicIPAddresses = new PublicIPAddressesImpl(this);
         }
-        return this.publicIpAddresses;
+        return this.publicIPAddresses;
     }
 
     /**
@@ -163,21 +165,17 @@ public final class NetworkManager extends Manager<NetworkManager, NetworkManagem
      */
     public NetworkInterfaces networkInterfaces() {
         if (networkInterfaces == null) {
-            this.networkInterfaces = new NetworkInterfacesImpl(
-                    super.innerManagementClient.networkInterfaces(),
-                    this);
+            this.networkInterfaces = new NetworkInterfacesImpl(this);
         }
         return this.networkInterfaces;
     }
 
     /**
-     * @return entry point to appplication gateway management
+     * @return entry point to application gateway management
      */
     public ApplicationGateways applicationGateways() {
         if (this.applicationGateways == null) {
-            this.applicationGateways = new ApplicationGatewaysImpl(
-                    super.innerManagementClient,
-                    this);
+            this.applicationGateways = new ApplicationGatewaysImpl(this);
         }
         return this.applicationGateways;
     }
@@ -185,11 +183,10 @@ public final class NetworkManager extends Manager<NetworkManager, NetworkManagem
     /**
      * @return entry point to load balancer management
      */
+    @Beta
     public LoadBalancers loadBalancers() {
         if (this.loadBalancers == null) {
-            this.loadBalancers = new LoadBalancersImpl(
-                    super.innerManagementClient,
-                    this);
+            this.loadBalancers = new LoadBalancersImpl(this);
         }
         return this.loadBalancers;
     }
@@ -202,6 +199,27 @@ public final class NetworkManager extends Manager<NetworkManager, NetworkManagem
             this.networkUsages = new NetworkUsagesImpl(super.innerManagementClient);
         }
         return this.networkUsages;
+    }
+
+    // Internal utility function
+    Subnet getAssociatedSubnet(SubResource subnetRef) {
+        if (subnetRef == null) {
+            return null;
+        }
+
+        String vnetId = ResourceUtils.parentResourceIdFromResourceId(subnetRef.id());
+        String subnetName = ResourceUtils.nameFromResourceId(subnetRef.id());
+
+        if (vnetId == null || subnetName == null) {
+            return null;
+        }
+
+        Network network = this.networks().getById(vnetId);
+        if (network == null) {
+            return null;
+        }
+
+        return network.subnets().get(subnetName);
     }
 
     // Internal utility function

@@ -12,8 +12,7 @@ import retrofit2.Retrofit;
 import com.microsoft.azure.management.datalake.analytics.Jobs;
 import com.google.common.base.Joiner;
 import com.google.common.reflect.TypeToken;
-import com.microsoft.azure.AzureServiceCall;
-import com.microsoft.azure.AzureServiceResponseBuilder;
+import com.microsoft.azure.AzureServiceFuture;
 import com.microsoft.azure.CloudException;
 import com.microsoft.azure.ListOperationCallback;
 import com.microsoft.azure.management.datalake.analytics.models.JobDataPath;
@@ -22,8 +21,8 @@ import com.microsoft.azure.management.datalake.analytics.models.JobStatistics;
 import com.microsoft.azure.management.datalake.analytics.models.PageImpl;
 import com.microsoft.azure.Page;
 import com.microsoft.azure.PagedList;
-import com.microsoft.rest.ServiceCall;
 import com.microsoft.rest.ServiceCallback;
+import com.microsoft.rest.ServiceFuture;
 import com.microsoft.rest.ServiceResponse;
 import com.microsoft.rest.Validator;
 import java.io.IOException;
@@ -38,6 +37,7 @@ import retrofit2.http.Path;
 import retrofit2.http.POST;
 import retrofit2.http.PUT;
 import retrofit2.http.Query;
+import retrofit2.http.Url;
 import retrofit2.Response;
 import rx.functions.Func1;
 import rx.Observable;
@@ -46,7 +46,7 @@ import rx.Observable;
  * An instance of this class provides access to all the operations defined
  * in Jobs.
  */
-public final class JobsImpl implements Jobs {
+public class JobsImpl implements Jobs {
     /** The Retrofit service to perform REST calls. */
     private JobsService service;
     /** The service client containing this operation class. */
@@ -68,37 +68,37 @@ public final class JobsImpl implements Jobs {
      * used by Retrofit to perform actually REST calls.
      */
     interface JobsService {
-        @Headers("Content-Type: application/json; charset=utf-8")
+        @Headers({ "Content-Type: application/json; charset=utf-8", "x-ms-logging-context: com.microsoft.azure.management.datalake.analytics.Jobs getStatistics" })
         @GET("Jobs/{jobIdentity}/GetStatistics")
         Observable<Response<ResponseBody>> getStatistics(@Path("jobIdentity") UUID jobIdentity, @Query("api-version") String apiVersion, @Header("accept-language") String acceptLanguage, @Header("x-ms-parameterized-host") String parameterizedHost, @Header("User-Agent") String userAgent);
 
-        @Headers("Content-Type: application/json; charset=utf-8")
-        @POST("Jobs/{jobIdentity}/GetDebugDataPath")
+        @Headers({ "Content-Type: application/json; charset=utf-8", "x-ms-logging-context: com.microsoft.azure.management.datalake.analytics.Jobs getDebugDataPath" })
+        @GET("Jobs/{jobIdentity}/GetDebugDataPath")
         Observable<Response<ResponseBody>> getDebugDataPath(@Path("jobIdentity") UUID jobIdentity, @Query("api-version") String apiVersion, @Header("accept-language") String acceptLanguage, @Header("x-ms-parameterized-host") String parameterizedHost, @Header("User-Agent") String userAgent);
 
-        @Headers("Content-Type: application/json; charset=utf-8")
+        @Headers({ "Content-Type: application/json; charset=utf-8", "x-ms-logging-context: com.microsoft.azure.management.datalake.analytics.Jobs build" })
         @POST("BuildJob")
         Observable<Response<ResponseBody>> build(@Body JobInformation parameters, @Query("api-version") String apiVersion, @Header("accept-language") String acceptLanguage, @Header("x-ms-parameterized-host") String parameterizedHost, @Header("User-Agent") String userAgent);
 
-        @Headers("Content-Type: application/json; charset=utf-8")
+        @Headers({ "Content-Type: application/json; charset=utf-8", "x-ms-logging-context: com.microsoft.azure.management.datalake.analytics.Jobs cancel" })
         @POST("Jobs/{jobIdentity}/CancelJob")
         Observable<Response<ResponseBody>> cancel(@Path("jobIdentity") UUID jobIdentity, @Query("api-version") String apiVersion, @Header("accept-language") String acceptLanguage, @Header("x-ms-parameterized-host") String parameterizedHost, @Header("User-Agent") String userAgent);
 
-        @Headers("Content-Type: application/json; charset=utf-8")
+        @Headers({ "Content-Type: application/json; charset=utf-8", "x-ms-logging-context: com.microsoft.azure.management.datalake.analytics.Jobs get" })
         @GET("Jobs/{jobIdentity}")
         Observable<Response<ResponseBody>> get(@Path("jobIdentity") UUID jobIdentity, @Query("api-version") String apiVersion, @Header("accept-language") String acceptLanguage, @Header("x-ms-parameterized-host") String parameterizedHost, @Header("User-Agent") String userAgent);
 
-        @Headers("Content-Type: application/json; charset=utf-8")
+        @Headers({ "Content-Type: application/json; charset=utf-8", "x-ms-logging-context: com.microsoft.azure.management.datalake.analytics.Jobs create" })
         @PUT("Jobs/{jobIdentity}")
         Observable<Response<ResponseBody>> create(@Path("jobIdentity") UUID jobIdentity, @Body JobInformation parameters, @Query("api-version") String apiVersion, @Header("accept-language") String acceptLanguage, @Header("x-ms-parameterized-host") String parameterizedHost, @Header("User-Agent") String userAgent);
 
-        @Headers("Content-Type: application/json; charset=utf-8")
+        @Headers({ "Content-Type: application/json; charset=utf-8", "x-ms-logging-context: com.microsoft.azure.management.datalake.analytics.Jobs list" })
         @GET("Jobs")
         Observable<Response<ResponseBody>> list(@Query("$filter") String filter, @Query("$top") Integer top, @Query("$skip") Integer skip, @Query("$select") String select, @Query("$orderby") String orderby, @Query("$count") Boolean count, @Query("api-version") String apiVersion, @Header("accept-language") String acceptLanguage, @Header("x-ms-parameterized-host") String parameterizedHost, @Header("User-Agent") String userAgent);
 
-        @Headers("Content-Type: application/json; charset=utf-8")
-        @GET("{nextLink}")
-        Observable<Response<ResponseBody>> listNext(@Path(value = "nextLink", encoded = true) String nextPageLink, @Header("accept-language") String acceptLanguage, @Header("User-Agent") String userAgent);
+        @Headers({ "Content-Type: application/json; charset=utf-8", "x-ms-logging-context: com.microsoft.azure.management.datalake.analytics.Jobs listNext" })
+        @GET
+        Observable<Response<ResponseBody>> listNext(@Url String nextUrl, @Header("accept-language") String acceptLanguage, @Header("User-Agent") String userAgent);
 
     }
 
@@ -107,10 +107,13 @@ public final class JobsImpl implements Jobs {
      *
      * @param accountName The Azure Data Lake Analytics account to execute job operations on.
      * @param jobIdentity Job Information ID.
+     * @throws IllegalArgumentException thrown if parameters fail the validation
+     * @throws CloudException thrown if the request is rejected by server
+     * @throws RuntimeException all other wrapped checked exceptions if the request fails to be sent
      * @return the JobStatistics object if successful.
      */
     public JobStatistics getStatistics(String accountName, UUID jobIdentity) {
-        return getStatisticsWithServiceResponseAsync(accountName, jobIdentity).toBlocking().single().getBody();
+        return getStatisticsWithServiceResponseAsync(accountName, jobIdentity).toBlocking().single().body();
     }
 
     /**
@@ -119,10 +122,11 @@ public final class JobsImpl implements Jobs {
      * @param accountName The Azure Data Lake Analytics account to execute job operations on.
      * @param jobIdentity Job Information ID.
      * @param serviceCallback the async ServiceCallback to handle successful and failed responses.
-     * @return the {@link ServiceCall} object
+     * @throws IllegalArgumentException thrown if parameters fail the validation
+     * @return the {@link ServiceFuture} object
      */
-    public ServiceCall<JobStatistics> getStatisticsAsync(String accountName, UUID jobIdentity, final ServiceCallback<JobStatistics> serviceCallback) {
-        return ServiceCall.create(getStatisticsWithServiceResponseAsync(accountName, jobIdentity), serviceCallback);
+    public ServiceFuture<JobStatistics> getStatisticsAsync(String accountName, UUID jobIdentity, final ServiceCallback<JobStatistics> serviceCallback) {
+        return ServiceFuture.fromResponse(getStatisticsWithServiceResponseAsync(accountName, jobIdentity), serviceCallback);
     }
 
     /**
@@ -130,13 +134,14 @@ public final class JobsImpl implements Jobs {
      *
      * @param accountName The Azure Data Lake Analytics account to execute job operations on.
      * @param jobIdentity Job Information ID.
+     * @throws IllegalArgumentException thrown if parameters fail the validation
      * @return the observable to the JobStatistics object
      */
     public Observable<JobStatistics> getStatisticsAsync(String accountName, UUID jobIdentity) {
         return getStatisticsWithServiceResponseAsync(accountName, jobIdentity).map(new Func1<ServiceResponse<JobStatistics>, JobStatistics>() {
             @Override
             public JobStatistics call(ServiceResponse<JobStatistics> response) {
-                return response.getBody();
+                return response.body();
             }
         });
     }
@@ -146,6 +151,7 @@ public final class JobsImpl implements Jobs {
      *
      * @param accountName The Azure Data Lake Analytics account to execute job operations on.
      * @param jobIdentity Job Information ID.
+     * @throws IllegalArgumentException thrown if parameters fail the validation
      * @return the observable to the JobStatistics object
      */
     public Observable<ServiceResponse<JobStatistics>> getStatisticsWithServiceResponseAsync(String accountName, UUID jobIdentity) {
@@ -177,7 +183,7 @@ public final class JobsImpl implements Jobs {
     }
 
     private ServiceResponse<JobStatistics> getStatisticsDelegate(Response<ResponseBody> response) throws CloudException, IOException, IllegalArgumentException {
-        return new AzureServiceResponseBuilder<JobStatistics, CloudException>(this.client.mapperAdapter())
+        return this.client.restClient().responseBuilderFactory().<JobStatistics, CloudException>newInstance(this.client.serializerAdapter())
                 .register(200, new TypeToken<JobStatistics>() { }.getType())
                 .registerError(CloudException.class)
                 .build(response);
@@ -188,10 +194,13 @@ public final class JobsImpl implements Jobs {
      *
      * @param accountName The Azure Data Lake Analytics account to execute job operations on.
      * @param jobIdentity JobInfo ID.
+     * @throws IllegalArgumentException thrown if parameters fail the validation
+     * @throws CloudException thrown if the request is rejected by server
+     * @throws RuntimeException all other wrapped checked exceptions if the request fails to be sent
      * @return the JobDataPath object if successful.
      */
     public JobDataPath getDebugDataPath(String accountName, UUID jobIdentity) {
-        return getDebugDataPathWithServiceResponseAsync(accountName, jobIdentity).toBlocking().single().getBody();
+        return getDebugDataPathWithServiceResponseAsync(accountName, jobIdentity).toBlocking().single().body();
     }
 
     /**
@@ -200,10 +209,11 @@ public final class JobsImpl implements Jobs {
      * @param accountName The Azure Data Lake Analytics account to execute job operations on.
      * @param jobIdentity JobInfo ID.
      * @param serviceCallback the async ServiceCallback to handle successful and failed responses.
-     * @return the {@link ServiceCall} object
+     * @throws IllegalArgumentException thrown if parameters fail the validation
+     * @return the {@link ServiceFuture} object
      */
-    public ServiceCall<JobDataPath> getDebugDataPathAsync(String accountName, UUID jobIdentity, final ServiceCallback<JobDataPath> serviceCallback) {
-        return ServiceCall.create(getDebugDataPathWithServiceResponseAsync(accountName, jobIdentity), serviceCallback);
+    public ServiceFuture<JobDataPath> getDebugDataPathAsync(String accountName, UUID jobIdentity, final ServiceCallback<JobDataPath> serviceCallback) {
+        return ServiceFuture.fromResponse(getDebugDataPathWithServiceResponseAsync(accountName, jobIdentity), serviceCallback);
     }
 
     /**
@@ -211,13 +221,14 @@ public final class JobsImpl implements Jobs {
      *
      * @param accountName The Azure Data Lake Analytics account to execute job operations on.
      * @param jobIdentity JobInfo ID.
+     * @throws IllegalArgumentException thrown if parameters fail the validation
      * @return the observable to the JobDataPath object
      */
     public Observable<JobDataPath> getDebugDataPathAsync(String accountName, UUID jobIdentity) {
         return getDebugDataPathWithServiceResponseAsync(accountName, jobIdentity).map(new Func1<ServiceResponse<JobDataPath>, JobDataPath>() {
             @Override
             public JobDataPath call(ServiceResponse<JobDataPath> response) {
-                return response.getBody();
+                return response.body();
             }
         });
     }
@@ -227,6 +238,7 @@ public final class JobsImpl implements Jobs {
      *
      * @param accountName The Azure Data Lake Analytics account to execute job operations on.
      * @param jobIdentity JobInfo ID.
+     * @throws IllegalArgumentException thrown if parameters fail the validation
      * @return the observable to the JobDataPath object
      */
     public Observable<ServiceResponse<JobDataPath>> getDebugDataPathWithServiceResponseAsync(String accountName, UUID jobIdentity) {
@@ -258,7 +270,7 @@ public final class JobsImpl implements Jobs {
     }
 
     private ServiceResponse<JobDataPath> getDebugDataPathDelegate(Response<ResponseBody> response) throws CloudException, IOException, IllegalArgumentException {
-        return new AzureServiceResponseBuilder<JobDataPath, CloudException>(this.client.mapperAdapter())
+        return this.client.restClient().responseBuilderFactory().<JobDataPath, CloudException>newInstance(this.client.serializerAdapter())
                 .register(200, new TypeToken<JobDataPath>() { }.getType())
                 .registerError(CloudException.class)
                 .build(response);
@@ -269,10 +281,13 @@ public final class JobsImpl implements Jobs {
      *
      * @param accountName The Azure Data Lake Analytics account to execute job operations on.
      * @param parameters The parameters to build a job.
+     * @throws IllegalArgumentException thrown if parameters fail the validation
+     * @throws CloudException thrown if the request is rejected by server
+     * @throws RuntimeException all other wrapped checked exceptions if the request fails to be sent
      * @return the JobInformation object if successful.
      */
     public JobInformation build(String accountName, JobInformation parameters) {
-        return buildWithServiceResponseAsync(accountName, parameters).toBlocking().single().getBody();
+        return buildWithServiceResponseAsync(accountName, parameters).toBlocking().single().body();
     }
 
     /**
@@ -281,10 +296,11 @@ public final class JobsImpl implements Jobs {
      * @param accountName The Azure Data Lake Analytics account to execute job operations on.
      * @param parameters The parameters to build a job.
      * @param serviceCallback the async ServiceCallback to handle successful and failed responses.
-     * @return the {@link ServiceCall} object
+     * @throws IllegalArgumentException thrown if parameters fail the validation
+     * @return the {@link ServiceFuture} object
      */
-    public ServiceCall<JobInformation> buildAsync(String accountName, JobInformation parameters, final ServiceCallback<JobInformation> serviceCallback) {
-        return ServiceCall.create(buildWithServiceResponseAsync(accountName, parameters), serviceCallback);
+    public ServiceFuture<JobInformation> buildAsync(String accountName, JobInformation parameters, final ServiceCallback<JobInformation> serviceCallback) {
+        return ServiceFuture.fromResponse(buildWithServiceResponseAsync(accountName, parameters), serviceCallback);
     }
 
     /**
@@ -292,13 +308,14 @@ public final class JobsImpl implements Jobs {
      *
      * @param accountName The Azure Data Lake Analytics account to execute job operations on.
      * @param parameters The parameters to build a job.
+     * @throws IllegalArgumentException thrown if parameters fail the validation
      * @return the observable to the JobInformation object
      */
     public Observable<JobInformation> buildAsync(String accountName, JobInformation parameters) {
         return buildWithServiceResponseAsync(accountName, parameters).map(new Func1<ServiceResponse<JobInformation>, JobInformation>() {
             @Override
             public JobInformation call(ServiceResponse<JobInformation> response) {
-                return response.getBody();
+                return response.body();
             }
         });
     }
@@ -308,6 +325,7 @@ public final class JobsImpl implements Jobs {
      *
      * @param accountName The Azure Data Lake Analytics account to execute job operations on.
      * @param parameters The parameters to build a job.
+     * @throws IllegalArgumentException thrown if parameters fail the validation
      * @return the observable to the JobInformation object
      */
     public Observable<ServiceResponse<JobInformation>> buildWithServiceResponseAsync(String accountName, JobInformation parameters) {
@@ -340,7 +358,7 @@ public final class JobsImpl implements Jobs {
     }
 
     private ServiceResponse<JobInformation> buildDelegate(Response<ResponseBody> response) throws CloudException, IOException, IllegalArgumentException {
-        return new AzureServiceResponseBuilder<JobInformation, CloudException>(this.client.mapperAdapter())
+        return this.client.restClient().responseBuilderFactory().<JobInformation, CloudException>newInstance(this.client.serializerAdapter())
                 .register(200, new TypeToken<JobInformation>() { }.getType())
                 .registerError(CloudException.class)
                 .build(response);
@@ -351,9 +369,12 @@ public final class JobsImpl implements Jobs {
      *
      * @param accountName The Azure Data Lake Analytics account to execute job operations on.
      * @param jobIdentity JobInfo ID to cancel.
+     * @throws IllegalArgumentException thrown if parameters fail the validation
+     * @throws CloudException thrown if the request is rejected by server
+     * @throws RuntimeException all other wrapped checked exceptions if the request fails to be sent
      */
     public void cancel(String accountName, UUID jobIdentity) {
-        cancelWithServiceResponseAsync(accountName, jobIdentity).toBlocking().single().getBody();
+        cancelWithServiceResponseAsync(accountName, jobIdentity).toBlocking().single().body();
     }
 
     /**
@@ -362,10 +383,11 @@ public final class JobsImpl implements Jobs {
      * @param accountName The Azure Data Lake Analytics account to execute job operations on.
      * @param jobIdentity JobInfo ID to cancel.
      * @param serviceCallback the async ServiceCallback to handle successful and failed responses.
-     * @return the {@link ServiceCall} object
+     * @throws IllegalArgumentException thrown if parameters fail the validation
+     * @return the {@link ServiceFuture} object
      */
-    public ServiceCall<Void> cancelAsync(String accountName, UUID jobIdentity, final ServiceCallback<Void> serviceCallback) {
-        return ServiceCall.create(cancelWithServiceResponseAsync(accountName, jobIdentity), serviceCallback);
+    public ServiceFuture<Void> cancelAsync(String accountName, UUID jobIdentity, final ServiceCallback<Void> serviceCallback) {
+        return ServiceFuture.fromResponse(cancelWithServiceResponseAsync(accountName, jobIdentity), serviceCallback);
     }
 
     /**
@@ -373,13 +395,14 @@ public final class JobsImpl implements Jobs {
      *
      * @param accountName The Azure Data Lake Analytics account to execute job operations on.
      * @param jobIdentity JobInfo ID to cancel.
+     * @throws IllegalArgumentException thrown if parameters fail the validation
      * @return the {@link ServiceResponse} object if successful.
      */
     public Observable<Void> cancelAsync(String accountName, UUID jobIdentity) {
         return cancelWithServiceResponseAsync(accountName, jobIdentity).map(new Func1<ServiceResponse<Void>, Void>() {
             @Override
             public Void call(ServiceResponse<Void> response) {
-                return response.getBody();
+                return response.body();
             }
         });
     }
@@ -389,6 +412,7 @@ public final class JobsImpl implements Jobs {
      *
      * @param accountName The Azure Data Lake Analytics account to execute job operations on.
      * @param jobIdentity JobInfo ID to cancel.
+     * @throws IllegalArgumentException thrown if parameters fail the validation
      * @return the {@link ServiceResponse} object if successful.
      */
     public Observable<ServiceResponse<Void>> cancelWithServiceResponseAsync(String accountName, UUID jobIdentity) {
@@ -420,8 +444,9 @@ public final class JobsImpl implements Jobs {
     }
 
     private ServiceResponse<Void> cancelDelegate(Response<ResponseBody> response) throws CloudException, IOException, IllegalArgumentException {
-        return new AzureServiceResponseBuilder<Void, CloudException>(this.client.mapperAdapter())
+        return this.client.restClient().responseBuilderFactory().<Void, CloudException>newInstance(this.client.serializerAdapter())
                 .register(200, new TypeToken<Void>() { }.getType())
+                .registerError(CloudException.class)
                 .build(response);
     }
 
@@ -430,10 +455,13 @@ public final class JobsImpl implements Jobs {
      *
      * @param accountName The Azure Data Lake Analytics account to execute job operations on.
      * @param jobIdentity JobInfo ID.
+     * @throws IllegalArgumentException thrown if parameters fail the validation
+     * @throws CloudException thrown if the request is rejected by server
+     * @throws RuntimeException all other wrapped checked exceptions if the request fails to be sent
      * @return the JobInformation object if successful.
      */
     public JobInformation get(String accountName, UUID jobIdentity) {
-        return getWithServiceResponseAsync(accountName, jobIdentity).toBlocking().single().getBody();
+        return getWithServiceResponseAsync(accountName, jobIdentity).toBlocking().single().body();
     }
 
     /**
@@ -442,10 +470,11 @@ public final class JobsImpl implements Jobs {
      * @param accountName The Azure Data Lake Analytics account to execute job operations on.
      * @param jobIdentity JobInfo ID.
      * @param serviceCallback the async ServiceCallback to handle successful and failed responses.
-     * @return the {@link ServiceCall} object
+     * @throws IllegalArgumentException thrown if parameters fail the validation
+     * @return the {@link ServiceFuture} object
      */
-    public ServiceCall<JobInformation> getAsync(String accountName, UUID jobIdentity, final ServiceCallback<JobInformation> serviceCallback) {
-        return ServiceCall.create(getWithServiceResponseAsync(accountName, jobIdentity), serviceCallback);
+    public ServiceFuture<JobInformation> getAsync(String accountName, UUID jobIdentity, final ServiceCallback<JobInformation> serviceCallback) {
+        return ServiceFuture.fromResponse(getWithServiceResponseAsync(accountName, jobIdentity), serviceCallback);
     }
 
     /**
@@ -453,13 +482,14 @@ public final class JobsImpl implements Jobs {
      *
      * @param accountName The Azure Data Lake Analytics account to execute job operations on.
      * @param jobIdentity JobInfo ID.
+     * @throws IllegalArgumentException thrown if parameters fail the validation
      * @return the observable to the JobInformation object
      */
     public Observable<JobInformation> getAsync(String accountName, UUID jobIdentity) {
         return getWithServiceResponseAsync(accountName, jobIdentity).map(new Func1<ServiceResponse<JobInformation>, JobInformation>() {
             @Override
             public JobInformation call(ServiceResponse<JobInformation> response) {
-                return response.getBody();
+                return response.body();
             }
         });
     }
@@ -469,6 +499,7 @@ public final class JobsImpl implements Jobs {
      *
      * @param accountName The Azure Data Lake Analytics account to execute job operations on.
      * @param jobIdentity JobInfo ID.
+     * @throws IllegalArgumentException thrown if parameters fail the validation
      * @return the observable to the JobInformation object
      */
     public Observable<ServiceResponse<JobInformation>> getWithServiceResponseAsync(String accountName, UUID jobIdentity) {
@@ -500,7 +531,7 @@ public final class JobsImpl implements Jobs {
     }
 
     private ServiceResponse<JobInformation> getDelegate(Response<ResponseBody> response) throws CloudException, IOException, IllegalArgumentException {
-        return new AzureServiceResponseBuilder<JobInformation, CloudException>(this.client.mapperAdapter())
+        return this.client.restClient().responseBuilderFactory().<JobInformation, CloudException>newInstance(this.client.serializerAdapter())
                 .register(200, new TypeToken<JobInformation>() { }.getType())
                 .registerError(CloudException.class)
                 .build(response);
@@ -512,10 +543,13 @@ public final class JobsImpl implements Jobs {
      * @param accountName The Azure Data Lake Analytics account to execute job operations on.
      * @param jobIdentity The job ID (a GUID) for the job being submitted.
      * @param parameters The parameters to submit a job.
+     * @throws IllegalArgumentException thrown if parameters fail the validation
+     * @throws CloudException thrown if the request is rejected by server
+     * @throws RuntimeException all other wrapped checked exceptions if the request fails to be sent
      * @return the JobInformation object if successful.
      */
     public JobInformation create(String accountName, UUID jobIdentity, JobInformation parameters) {
-        return createWithServiceResponseAsync(accountName, jobIdentity, parameters).toBlocking().single().getBody();
+        return createWithServiceResponseAsync(accountName, jobIdentity, parameters).toBlocking().single().body();
     }
 
     /**
@@ -525,10 +559,11 @@ public final class JobsImpl implements Jobs {
      * @param jobIdentity The job ID (a GUID) for the job being submitted.
      * @param parameters The parameters to submit a job.
      * @param serviceCallback the async ServiceCallback to handle successful and failed responses.
-     * @return the {@link ServiceCall} object
+     * @throws IllegalArgumentException thrown if parameters fail the validation
+     * @return the {@link ServiceFuture} object
      */
-    public ServiceCall<JobInformation> createAsync(String accountName, UUID jobIdentity, JobInformation parameters, final ServiceCallback<JobInformation> serviceCallback) {
-        return ServiceCall.create(createWithServiceResponseAsync(accountName, jobIdentity, parameters), serviceCallback);
+    public ServiceFuture<JobInformation> createAsync(String accountName, UUID jobIdentity, JobInformation parameters, final ServiceCallback<JobInformation> serviceCallback) {
+        return ServiceFuture.fromResponse(createWithServiceResponseAsync(accountName, jobIdentity, parameters), serviceCallback);
     }
 
     /**
@@ -537,13 +572,14 @@ public final class JobsImpl implements Jobs {
      * @param accountName The Azure Data Lake Analytics account to execute job operations on.
      * @param jobIdentity The job ID (a GUID) for the job being submitted.
      * @param parameters The parameters to submit a job.
+     * @throws IllegalArgumentException thrown if parameters fail the validation
      * @return the observable to the JobInformation object
      */
     public Observable<JobInformation> createAsync(String accountName, UUID jobIdentity, JobInformation parameters) {
         return createWithServiceResponseAsync(accountName, jobIdentity, parameters).map(new Func1<ServiceResponse<JobInformation>, JobInformation>() {
             @Override
             public JobInformation call(ServiceResponse<JobInformation> response) {
-                return response.getBody();
+                return response.body();
             }
         });
     }
@@ -554,6 +590,7 @@ public final class JobsImpl implements Jobs {
      * @param accountName The Azure Data Lake Analytics account to execute job operations on.
      * @param jobIdentity The job ID (a GUID) for the job being submitted.
      * @param parameters The parameters to submit a job.
+     * @throws IllegalArgumentException thrown if parameters fail the validation
      * @return the observable to the JobInformation object
      */
     public Observable<ServiceResponse<JobInformation>> createWithServiceResponseAsync(String accountName, UUID jobIdentity, JobInformation parameters) {
@@ -589,7 +626,7 @@ public final class JobsImpl implements Jobs {
     }
 
     private ServiceResponse<JobInformation> createDelegate(Response<ResponseBody> response) throws CloudException, IOException, IllegalArgumentException {
-        return new AzureServiceResponseBuilder<JobInformation, CloudException>(this.client.mapperAdapter())
+        return this.client.restClient().responseBuilderFactory().<JobInformation, CloudException>newInstance(this.client.serializerAdapter())
                 .register(200, new TypeToken<JobInformation>() { }.getType())
                 .registerError(CloudException.class)
                 .build(response);
@@ -599,14 +636,17 @@ public final class JobsImpl implements Jobs {
      * Lists the jobs, if any, associated with the specified Data Lake Analytics account. The response includes a link to the next page of results, if any.
      *
      * @param accountName The Azure Data Lake Analytics account to execute job operations on.
+     * @throws IllegalArgumentException thrown if parameters fail the validation
+     * @throws CloudException thrown if the request is rejected by server
+     * @throws RuntimeException all other wrapped checked exceptions if the request fails to be sent
      * @return the PagedList&lt;JobInformation&gt; object if successful.
      */
     public PagedList<JobInformation> list(final String accountName) {
         ServiceResponse<Page<JobInformation>> response = listSinglePageAsync(accountName).toBlocking().single();
-        return new PagedList<JobInformation>(response.getBody()) {
+        return new PagedList<JobInformation>(response.body()) {
             @Override
             public Page<JobInformation> nextPage(String nextPageLink) {
-                return listNextSinglePageAsync(nextPageLink).toBlocking().single().getBody();
+                return listNextSinglePageAsync(nextPageLink).toBlocking().single().body();
             }
         };
     }
@@ -616,10 +656,11 @@ public final class JobsImpl implements Jobs {
      *
      * @param accountName The Azure Data Lake Analytics account to execute job operations on.
      * @param serviceCallback the async ServiceCallback to handle successful and failed responses.
-     * @return the {@link ServiceCall} object
+     * @throws IllegalArgumentException thrown if parameters fail the validation
+     * @return the {@link ServiceFuture} object
      */
-    public ServiceCall<List<JobInformation>> listAsync(final String accountName, final ListOperationCallback<JobInformation> serviceCallback) {
-        return AzureServiceCall.create(
+    public ServiceFuture<List<JobInformation>> listAsync(final String accountName, final ListOperationCallback<JobInformation> serviceCallback) {
+        return AzureServiceFuture.fromPageResponse(
             listSinglePageAsync(accountName),
             new Func1<String, Observable<ServiceResponse<Page<JobInformation>>>>() {
                 @Override
@@ -634,6 +675,7 @@ public final class JobsImpl implements Jobs {
      * Lists the jobs, if any, associated with the specified Data Lake Analytics account. The response includes a link to the next page of results, if any.
      *
      * @param accountName The Azure Data Lake Analytics account to execute job operations on.
+     * @throws IllegalArgumentException thrown if parameters fail the validation
      * @return the observable to the PagedList&lt;JobInformation&gt; object
      */
     public Observable<Page<JobInformation>> listAsync(final String accountName) {
@@ -641,7 +683,7 @@ public final class JobsImpl implements Jobs {
             .map(new Func1<ServiceResponse<Page<JobInformation>>, Page<JobInformation>>() {
                 @Override
                 public Page<JobInformation> call(ServiceResponse<Page<JobInformation>> response) {
-                    return response.getBody();
+                    return response.body();
                 }
             });
     }
@@ -650,6 +692,7 @@ public final class JobsImpl implements Jobs {
      * Lists the jobs, if any, associated with the specified Data Lake Analytics account. The response includes a link to the next page of results, if any.
      *
      * @param accountName The Azure Data Lake Analytics account to execute job operations on.
+     * @throws IllegalArgumentException thrown if parameters fail the validation
      * @return the observable to the PagedList&lt;JobInformation&gt; object
      */
     public Observable<ServiceResponse<Page<JobInformation>>> listWithServiceResponseAsync(final String accountName) {
@@ -657,7 +700,7 @@ public final class JobsImpl implements Jobs {
             .concatMap(new Func1<ServiceResponse<Page<JobInformation>>, Observable<ServiceResponse<Page<JobInformation>>>>() {
                 @Override
                 public Observable<ServiceResponse<Page<JobInformation>>> call(ServiceResponse<Page<JobInformation>> page) {
-                    String nextPageLink = page.getBody().getNextPageLink();
+                    String nextPageLink = page.body().nextPageLink();
                     if (nextPageLink == null) {
                         return Observable.just(page);
                     }
@@ -670,6 +713,7 @@ public final class JobsImpl implements Jobs {
      * Lists the jobs, if any, associated with the specified Data Lake Analytics account. The response includes a link to the next page of results, if any.
      *
      * @param accountName The Azure Data Lake Analytics account to execute job operations on.
+     * @throws IllegalArgumentException thrown if parameters fail the validation
      * @return the PagedList&lt;JobInformation&gt; object wrapped in {@link ServiceResponse} if successful.
      */
     public Observable<ServiceResponse<Page<JobInformation>>> listSinglePageAsync(final String accountName) {
@@ -695,7 +739,7 @@ public final class JobsImpl implements Jobs {
                 public Observable<ServiceResponse<Page<JobInformation>>> call(Response<ResponseBody> response) {
                     try {
                         ServiceResponse<PageImpl<JobInformation>> result = listDelegate(response);
-                        return Observable.just(new ServiceResponse<Page<JobInformation>>(result.getBody(), result.getResponse()));
+                        return Observable.just(new ServiceResponse<Page<JobInformation>>(result.body(), result.response()));
                     } catch (Throwable t) {
                         return Observable.error(t);
                     }
@@ -713,14 +757,17 @@ public final class JobsImpl implements Jobs {
      * @param select OData Select statement. Limits the properties on each entry to just those requested, e.g. Categories?$select=CategoryName,Description. Optional.
      * @param orderby OrderBy clause. One or more comma-separated expressions with an optional "asc" (the default) or "desc" depending on the order you'd like the values sorted, e.g. Categories?$orderby=CategoryName desc. Optional.
      * @param count The Boolean value of true or false to request a count of the matching resources included with the resources in the response, e.g. Categories?$count=true. Optional.
+     * @throws IllegalArgumentException thrown if parameters fail the validation
+     * @throws CloudException thrown if the request is rejected by server
+     * @throws RuntimeException all other wrapped checked exceptions if the request fails to be sent
      * @return the PagedList&lt;JobInformation&gt; object if successful.
      */
     public PagedList<JobInformation> list(final String accountName, final String filter, final Integer top, final Integer skip, final String select, final String orderby, final Boolean count) {
         ServiceResponse<Page<JobInformation>> response = listSinglePageAsync(accountName, filter, top, skip, select, orderby, count).toBlocking().single();
-        return new PagedList<JobInformation>(response.getBody()) {
+        return new PagedList<JobInformation>(response.body()) {
             @Override
             public Page<JobInformation> nextPage(String nextPageLink) {
-                return listNextSinglePageAsync(nextPageLink).toBlocking().single().getBody();
+                return listNextSinglePageAsync(nextPageLink).toBlocking().single().body();
             }
         };
     }
@@ -736,10 +783,11 @@ public final class JobsImpl implements Jobs {
      * @param orderby OrderBy clause. One or more comma-separated expressions with an optional "asc" (the default) or "desc" depending on the order you'd like the values sorted, e.g. Categories?$orderby=CategoryName desc. Optional.
      * @param count The Boolean value of true or false to request a count of the matching resources included with the resources in the response, e.g. Categories?$count=true. Optional.
      * @param serviceCallback the async ServiceCallback to handle successful and failed responses.
-     * @return the {@link ServiceCall} object
+     * @throws IllegalArgumentException thrown if parameters fail the validation
+     * @return the {@link ServiceFuture} object
      */
-    public ServiceCall<List<JobInformation>> listAsync(final String accountName, final String filter, final Integer top, final Integer skip, final String select, final String orderby, final Boolean count, final ListOperationCallback<JobInformation> serviceCallback) {
-        return AzureServiceCall.create(
+    public ServiceFuture<List<JobInformation>> listAsync(final String accountName, final String filter, final Integer top, final Integer skip, final String select, final String orderby, final Boolean count, final ListOperationCallback<JobInformation> serviceCallback) {
+        return AzureServiceFuture.fromPageResponse(
             listSinglePageAsync(accountName, filter, top, skip, select, orderby, count),
             new Func1<String, Observable<ServiceResponse<Page<JobInformation>>>>() {
                 @Override
@@ -760,6 +808,7 @@ public final class JobsImpl implements Jobs {
      * @param select OData Select statement. Limits the properties on each entry to just those requested, e.g. Categories?$select=CategoryName,Description. Optional.
      * @param orderby OrderBy clause. One or more comma-separated expressions with an optional "asc" (the default) or "desc" depending on the order you'd like the values sorted, e.g. Categories?$orderby=CategoryName desc. Optional.
      * @param count The Boolean value of true or false to request a count of the matching resources included with the resources in the response, e.g. Categories?$count=true. Optional.
+     * @throws IllegalArgumentException thrown if parameters fail the validation
      * @return the observable to the PagedList&lt;JobInformation&gt; object
      */
     public Observable<Page<JobInformation>> listAsync(final String accountName, final String filter, final Integer top, final Integer skip, final String select, final String orderby, final Boolean count) {
@@ -767,7 +816,7 @@ public final class JobsImpl implements Jobs {
             .map(new Func1<ServiceResponse<Page<JobInformation>>, Page<JobInformation>>() {
                 @Override
                 public Page<JobInformation> call(ServiceResponse<Page<JobInformation>> response) {
-                    return response.getBody();
+                    return response.body();
                 }
             });
     }
@@ -782,6 +831,7 @@ public final class JobsImpl implements Jobs {
      * @param select OData Select statement. Limits the properties on each entry to just those requested, e.g. Categories?$select=CategoryName,Description. Optional.
      * @param orderby OrderBy clause. One or more comma-separated expressions with an optional "asc" (the default) or "desc" depending on the order you'd like the values sorted, e.g. Categories?$orderby=CategoryName desc. Optional.
      * @param count The Boolean value of true or false to request a count of the matching resources included with the resources in the response, e.g. Categories?$count=true. Optional.
+     * @throws IllegalArgumentException thrown if parameters fail the validation
      * @return the observable to the PagedList&lt;JobInformation&gt; object
      */
     public Observable<ServiceResponse<Page<JobInformation>>> listWithServiceResponseAsync(final String accountName, final String filter, final Integer top, final Integer skip, final String select, final String orderby, final Boolean count) {
@@ -789,7 +839,7 @@ public final class JobsImpl implements Jobs {
             .concatMap(new Func1<ServiceResponse<Page<JobInformation>>, Observable<ServiceResponse<Page<JobInformation>>>>() {
                 @Override
                 public Observable<ServiceResponse<Page<JobInformation>>> call(ServiceResponse<Page<JobInformation>> page) {
-                    String nextPageLink = page.getBody().getNextPageLink();
+                    String nextPageLink = page.body().nextPageLink();
                     if (nextPageLink == null) {
                         return Observable.just(page);
                     }
@@ -808,6 +858,7 @@ public final class JobsImpl implements Jobs {
     ServiceResponse<PageImpl<JobInformation>> * @param select OData Select statement. Limits the properties on each entry to just those requested, e.g. Categories?$select=CategoryName,Description. Optional.
     ServiceResponse<PageImpl<JobInformation>> * @param orderby OrderBy clause. One or more comma-separated expressions with an optional "asc" (the default) or "desc" depending on the order you'd like the values sorted, e.g. Categories?$orderby=CategoryName desc. Optional.
     ServiceResponse<PageImpl<JobInformation>> * @param count The Boolean value of true or false to request a count of the matching resources included with the resources in the response, e.g. Categories?$count=true. Optional.
+     * @throws IllegalArgumentException thrown if parameters fail the validation
      * @return the PagedList&lt;JobInformation&gt; object wrapped in {@link ServiceResponse} if successful.
      */
     public Observable<ServiceResponse<Page<JobInformation>>> listSinglePageAsync(final String accountName, final String filter, final Integer top, final Integer skip, final String select, final String orderby, final Boolean count) {
@@ -827,7 +878,7 @@ public final class JobsImpl implements Jobs {
                 public Observable<ServiceResponse<Page<JobInformation>>> call(Response<ResponseBody> response) {
                     try {
                         ServiceResponse<PageImpl<JobInformation>> result = listDelegate(response);
-                        return Observable.just(new ServiceResponse<Page<JobInformation>>(result.getBody(), result.getResponse()));
+                        return Observable.just(new ServiceResponse<Page<JobInformation>>(result.body(), result.response()));
                     } catch (Throwable t) {
                         return Observable.error(t);
                     }
@@ -836,7 +887,7 @@ public final class JobsImpl implements Jobs {
     }
 
     private ServiceResponse<PageImpl<JobInformation>> listDelegate(Response<ResponseBody> response) throws CloudException, IOException, IllegalArgumentException {
-        return new AzureServiceResponseBuilder<PageImpl<JobInformation>, CloudException>(this.client.mapperAdapter())
+        return this.client.restClient().responseBuilderFactory().<PageImpl<JobInformation>, CloudException>newInstance(this.client.serializerAdapter())
                 .register(200, new TypeToken<PageImpl<JobInformation>>() { }.getType())
                 .registerError(CloudException.class)
                 .build(response);
@@ -846,14 +897,17 @@ public final class JobsImpl implements Jobs {
      * Lists the jobs, if any, associated with the specified Data Lake Analytics account. The response includes a link to the next page of results, if any.
      *
      * @param nextPageLink The NextLink from the previous successful call to List operation.
+     * @throws IllegalArgumentException thrown if parameters fail the validation
+     * @throws CloudException thrown if the request is rejected by server
+     * @throws RuntimeException all other wrapped checked exceptions if the request fails to be sent
      * @return the PagedList&lt;JobInformation&gt; object if successful.
      */
     public PagedList<JobInformation> listNext(final String nextPageLink) {
         ServiceResponse<Page<JobInformation>> response = listNextSinglePageAsync(nextPageLink).toBlocking().single();
-        return new PagedList<JobInformation>(response.getBody()) {
+        return new PagedList<JobInformation>(response.body()) {
             @Override
             public Page<JobInformation> nextPage(String nextPageLink) {
-                return listNextSinglePageAsync(nextPageLink).toBlocking().single().getBody();
+                return listNextSinglePageAsync(nextPageLink).toBlocking().single().body();
             }
         };
     }
@@ -862,12 +916,13 @@ public final class JobsImpl implements Jobs {
      * Lists the jobs, if any, associated with the specified Data Lake Analytics account. The response includes a link to the next page of results, if any.
      *
      * @param nextPageLink The NextLink from the previous successful call to List operation.
-     * @param serviceCall the ServiceCall object tracking the Retrofit calls
+     * @param serviceFuture the ServiceFuture object tracking the Retrofit calls
      * @param serviceCallback the async ServiceCallback to handle successful and failed responses.
-     * @return the {@link ServiceCall} object
+     * @throws IllegalArgumentException thrown if parameters fail the validation
+     * @return the {@link ServiceFuture} object
      */
-    public ServiceCall<List<JobInformation>> listNextAsync(final String nextPageLink, final ServiceCall<List<JobInformation>> serviceCall, final ListOperationCallback<JobInformation> serviceCallback) {
-        return AzureServiceCall.create(
+    public ServiceFuture<List<JobInformation>> listNextAsync(final String nextPageLink, final ServiceFuture<List<JobInformation>> serviceFuture, final ListOperationCallback<JobInformation> serviceCallback) {
+        return AzureServiceFuture.fromPageResponse(
             listNextSinglePageAsync(nextPageLink),
             new Func1<String, Observable<ServiceResponse<Page<JobInformation>>>>() {
                 @Override
@@ -882,6 +937,7 @@ public final class JobsImpl implements Jobs {
      * Lists the jobs, if any, associated with the specified Data Lake Analytics account. The response includes a link to the next page of results, if any.
      *
      * @param nextPageLink The NextLink from the previous successful call to List operation.
+     * @throws IllegalArgumentException thrown if parameters fail the validation
      * @return the observable to the PagedList&lt;JobInformation&gt; object
      */
     public Observable<Page<JobInformation>> listNextAsync(final String nextPageLink) {
@@ -889,7 +945,7 @@ public final class JobsImpl implements Jobs {
             .map(new Func1<ServiceResponse<Page<JobInformation>>, Page<JobInformation>>() {
                 @Override
                 public Page<JobInformation> call(ServiceResponse<Page<JobInformation>> response) {
-                    return response.getBody();
+                    return response.body();
                 }
             });
     }
@@ -898,6 +954,7 @@ public final class JobsImpl implements Jobs {
      * Lists the jobs, if any, associated with the specified Data Lake Analytics account. The response includes a link to the next page of results, if any.
      *
      * @param nextPageLink The NextLink from the previous successful call to List operation.
+     * @throws IllegalArgumentException thrown if parameters fail the validation
      * @return the observable to the PagedList&lt;JobInformation&gt; object
      */
     public Observable<ServiceResponse<Page<JobInformation>>> listNextWithServiceResponseAsync(final String nextPageLink) {
@@ -905,7 +962,7 @@ public final class JobsImpl implements Jobs {
             .concatMap(new Func1<ServiceResponse<Page<JobInformation>>, Observable<ServiceResponse<Page<JobInformation>>>>() {
                 @Override
                 public Observable<ServiceResponse<Page<JobInformation>>> call(ServiceResponse<Page<JobInformation>> page) {
-                    String nextPageLink = page.getBody().getNextPageLink();
+                    String nextPageLink = page.body().nextPageLink();
                     if (nextPageLink == null) {
                         return Observable.just(page);
                     }
@@ -918,19 +975,21 @@ public final class JobsImpl implements Jobs {
      * Lists the jobs, if any, associated with the specified Data Lake Analytics account. The response includes a link to the next page of results, if any.
      *
     ServiceResponse<PageImpl<JobInformation>> * @param nextPageLink The NextLink from the previous successful call to List operation.
+     * @throws IllegalArgumentException thrown if parameters fail the validation
      * @return the PagedList&lt;JobInformation&gt; object wrapped in {@link ServiceResponse} if successful.
      */
     public Observable<ServiceResponse<Page<JobInformation>>> listNextSinglePageAsync(final String nextPageLink) {
         if (nextPageLink == null) {
             throw new IllegalArgumentException("Parameter nextPageLink is required and cannot be null.");
         }
-        return service.listNext(nextPageLink, this.client.acceptLanguage(), this.client.userAgent())
+        String nextUrl = String.format("%s", nextPageLink);
+        return service.listNext(nextUrl, this.client.acceptLanguage(), this.client.userAgent())
             .flatMap(new Func1<Response<ResponseBody>, Observable<ServiceResponse<Page<JobInformation>>>>() {
                 @Override
                 public Observable<ServiceResponse<Page<JobInformation>>> call(Response<ResponseBody> response) {
                     try {
                         ServiceResponse<PageImpl<JobInformation>> result = listNextDelegate(response);
-                        return Observable.just(new ServiceResponse<Page<JobInformation>>(result.getBody(), result.getResponse()));
+                        return Observable.just(new ServiceResponse<Page<JobInformation>>(result.body(), result.response()));
                     } catch (Throwable t) {
                         return Observable.error(t);
                     }
@@ -939,7 +998,7 @@ public final class JobsImpl implements Jobs {
     }
 
     private ServiceResponse<PageImpl<JobInformation>> listNextDelegate(Response<ResponseBody> response) throws CloudException, IOException, IllegalArgumentException {
-        return new AzureServiceResponseBuilder<PageImpl<JobInformation>, CloudException>(this.client.mapperAdapter())
+        return this.client.restClient().responseBuilderFactory().<PageImpl<JobInformation>, CloudException>newInstance(this.client.serializerAdapter())
                 .register(200, new TypeToken<PageImpl<JobInformation>>() { }.getType())
                 .registerError(CloudException.class)
                 .build(response);

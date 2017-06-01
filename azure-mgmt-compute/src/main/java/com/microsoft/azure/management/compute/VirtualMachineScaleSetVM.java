@@ -1,12 +1,21 @@
+/**
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License. See License.txt in the project root for
+ * license information.
+ */
+
 package com.microsoft.azure.management.compute;
 
+import com.microsoft.azure.PagedList;
 import com.microsoft.azure.management.apigeneration.Fluent;
+import com.microsoft.azure.management.apigeneration.Method;
 import com.microsoft.azure.management.compute.implementation.VirtualMachineScaleSetVMInner;
+import com.microsoft.azure.management.network.VirtualMachineScaleSetNetworkInterface;
 import com.microsoft.azure.management.resources.fluentcore.arm.models.ChildResource;
 import com.microsoft.azure.management.resources.fluentcore.arm.models.Resource;
+import com.microsoft.azure.management.resources.fluentcore.model.HasInner;
 import com.microsoft.azure.management.resources.fluentcore.model.Refreshable;
-import com.microsoft.azure.management.resources.fluentcore.model.Wrapper;
-import rx.Observable;
+import rx.Completable;
 
 import java.util.List;
 import java.util.Map;
@@ -19,14 +28,14 @@ public interface VirtualMachineScaleSetVM extends
         Resource,
         ChildResource<VirtualMachineScaleSet>,
         Refreshable<VirtualMachineScaleSetVM>,
-        Wrapper<VirtualMachineScaleSetVMInner> {
+        HasInner<VirtualMachineScaleSetVMInner> {
     /**
-     * @return the instance id assigned to this virtual machine instance
+     * @return the instance ID assigned to this virtual machine instance
      */
     String instanceId();
 
     /**
-     * @return the sku of the virtual machine instance, this will be sku used while creating the parent
+     * @return the SKU of the virtual machine instance, this will be SKU used while creating the parent
      * virtual machine scale set
      */
     Sku sku();
@@ -42,10 +51,19 @@ public interface VirtualMachineScaleSetVM extends
     boolean isLatestScaleSetUpdateApplied();
 
     /**
-     * @return true if the operating system of the virtual machine instance is based on platform image,
-     * false if based on custom image
+     * @return true if the operating system of the virtual machine instance is based on platform image
      */
-    boolean isOsBasedOnPlatformImage();
+    boolean isOSBasedOnPlatformImage();
+
+    /**
+     * @return true if the operating system of the virtual machine instance is based on custom image
+     */
+    boolean isOSBasedOnCustomImage();
+
+    /**
+     * @return true if the operating system of the virtual machine instance is based on stored image
+     */
+    boolean isOSBasedOnStoredImage();
 
     /**
      * @return reference to the platform image that the virtual machine instance operating system is based on,
@@ -55,15 +73,21 @@ public interface VirtualMachineScaleSetVM extends
 
     /**
      * @return the platform image that the virtual machine instance operating system is based on, null be
-     * returned if the operating system is based on custom image
+     * returned otherwise
      */
-    VirtualMachineImage getPlatformImage();
+    VirtualMachineImage getOSPlatformImage();
 
     /**
-     * @return vhd uri of the custom image that the virtual machine instance operating system is based on,
+     * @return the custom image that the virtual machine instance operating system is based on, null be
+     * returned otherwise
+     */
+    VirtualMachineCustomImage getOSCustomImage();
+
+    /**
+     * @return VHD URI of the custom image that the virtual machine instance operating system is based on,
      * null will be returned if the operating system is based on platform image
      */
-    String customImageVhdUri();
+    String storedImageUnmanagedVhdUri();
 
     /**
      * @return the name of the operating system disk
@@ -71,9 +95,24 @@ public interface VirtualMachineScaleSetVM extends
     String osDiskName();
 
     /**
-     * @return vhd uri to the operating system disk
+     * @return VHD URI to the operating system disk
      */
-    String osDiskVhdUri();
+    String osUnmanagedDiskVhdUri();
+
+    /**
+     * @return resource ID of the managed disk backing OS disk
+     */
+    String osDiskId();
+
+    /**
+     * @return the unmanaged data disks associated with this virtual machine instance, indexed by LUN
+     */
+    Map<Integer, VirtualMachineUnmanagedDataDisk> unmanagedDataDisks();
+
+    /**
+     * @return the managed data disks associated with this virtual machine instance, indexed by LUN
+     */
+    Map<Integer, VirtualMachineDataDisk> dataDisks();
 
     /**
      * @return the caching type of the operating system disk
@@ -86,7 +125,7 @@ public interface VirtualMachineScaleSetVM extends
     int osDiskSizeInGB();
 
     /**
-     * @return the virtual machine instance computer name with prefix {@link VirtualMachineScaleSet#computerNamePrefix()}
+     * @return the virtual machine instance computer name with the VM scale set prefix.
      */
     String computerName();
 
@@ -106,9 +145,9 @@ public interface VirtualMachineScaleSetVM extends
     boolean isLinuxPasswordAuthenticationEnabled();
 
     /**
-     * @return true if this is a Windows virtual machine and Vm agent is provisioned, false otherwise
+     * @return true if this is a Windows virtual machine and VM agent is provisioned, false otherwise
      */
-    boolean isWindowsVmAgentProvisioned();
+    boolean isWindowsVMAgentProvisioned();
 
     /**
      * @return true if this is a Windows virtual machine and automatic update is turned on, false otherwise
@@ -126,22 +165,22 @@ public interface VirtualMachineScaleSetVM extends
     boolean bootDiagnosticEnabled();
 
     /**
-     * @return the uri to the storage account storing boot diagnostics log
+     * @return the URI to the storage account storing boot diagnostics log
      */
     String bootDiagnosticStorageAccountUri();
 
     /**
-     * @return the resource id of the availability set that this virtual machine instance belongs to
+     * @return the resource ID of the availability set that this virtual machine instance belongs to
      */
     String availabilitySetId();
 
     /**
-     * @return the list of resource id of network interface associated with the virtual machine instance
+     * @return the list of resource ID of network interface associated with the virtual machine instance
      */
     List<String> networkInterfaceIds();
 
     /**
-     * @return resource id of primary network interface associated with virtual machine instance
+     * @return resource ID of primary network interface associated with virtual machine instance
      */
     String primaryNetworkInterfaceId();
 
@@ -166,6 +205,11 @@ public interface VirtualMachineScaleSetVM extends
     DiagnosticsProfile diagnosticsProfile();
 
     /**
+     * @return true if managed disk is used for the virtual machine's disks (os, data)
+     */
+    boolean isManagedDiskEnabled();
+
+    /**
      * Updates the version of the installed operating system in the virtual machine instance.
      */
     void reimage();
@@ -173,9 +217,10 @@ public interface VirtualMachineScaleSetVM extends
     /**
      * Updates the version of the installed operating system in the virtual machine instance.
      *
-     * @return the observable to the reimage action
+     * @return a representation of the deferred computation of this call
      */
-    Observable<Void> reimageAsync();
+    @Method
+    Completable reimageAsync();
 
     /**
      * Shuts down the virtual machine instance and releases the associated compute resources.
@@ -185,9 +230,10 @@ public interface VirtualMachineScaleSetVM extends
     /**
      * Shuts down the virtual machine instance and releases the associated compute resources.
      *
-     * @return the observable to the deallocate action
+     * @return a representation of the deferred computation of this call
      */
-    Observable<Void> deallocateAsync();
+    @Method
+    Completable deallocateAsync();
 
     /**
      * Stops the virtual machine instance.
@@ -197,9 +243,10 @@ public interface VirtualMachineScaleSetVM extends
     /**
      * Stops the virtual machine instance.
      *
-     * @return the observable to the poweroff action
+     * @return a representation of the deferred computation of this call
      */
-    Observable<Void> powerOffAsync();
+    @Method
+    Completable powerOffAsync();
 
     /**
      * Starts the virtual machine instance.
@@ -209,9 +256,10 @@ public interface VirtualMachineScaleSetVM extends
     /**
      * Starts the virtual machine instance.
      *
-     * @return the observable to the start action
+     * @return a representation of the deferred computation of this call
      */
-    Observable<Void> startAsync();
+    @Method
+    Completable startAsync();
 
     /**
      * Restarts the virtual machine instance.
@@ -221,9 +269,10 @@ public interface VirtualMachineScaleSetVM extends
     /**
      * Restarts the virtual machine instance.
      *
-     * @return the observable to the restart action
+     * @return a representation of the deferred computation of this call
      */
-    Observable<Void> restartAsync();
+    @Method
+    Completable restartAsync();
 
     /**
      * Deletes the virtual machine instance.
@@ -233,14 +282,15 @@ public interface VirtualMachineScaleSetVM extends
     /**
      * Deletes the virtual machine instance.
      *
-     * @return the observable to the delete action
+     * @return a representation of the deferred computation of this call
      */
-    Observable<Void> deleteAsync();
+    @Method
+    Completable deleteAsync();
 
     /**
      * Gets the instance view of the virtual machine instance.
      * <p>
-     * To get the latest instance view use {@link VirtualMachineScaleSetVM#refreshInstanceView()}.
+     * To get the latest instance view use <code>refreshInstanceView()</code>.
      *
      * @return the instance view
      */
@@ -251,10 +301,24 @@ public interface VirtualMachineScaleSetVM extends
      *
      * @return the instance view
      */
+    @Method
     VirtualMachineInstanceView refreshInstanceView();
 
     /**
      * @return the power state of the virtual machine instance
      */
     PowerState powerState();
+
+    /**
+     * Gets a network interface associated with this virtual machine instance.
+     *
+     * @param name the name of the network interface
+     * @return the network interface
+     */
+    VirtualMachineScaleSetNetworkInterface getNetworkInterface(String name);
+
+    /**
+     * @return the network interfaces associated with this virtual machine instance.
+     */
+    PagedList<VirtualMachineScaleSetNetworkInterface> listNetworkInterfaces();
 }

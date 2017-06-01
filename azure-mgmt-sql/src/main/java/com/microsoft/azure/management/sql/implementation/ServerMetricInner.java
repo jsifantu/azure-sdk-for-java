@@ -12,43 +12,43 @@ import org.joda.time.DateTime;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
- * Represents Azure SQL Server metrics.
+ * Represents Azure SQL server metrics.
  */
 public class ServerMetricInner {
     /**
      * The name of the resource.
      */
-    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    @JsonProperty(value = "resourceName", access = JsonProperty.Access.WRITE_ONLY)
     private String resourceName;
 
     /**
      * The metric display name.
      */
-    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    @JsonProperty(value = "displayName", access = JsonProperty.Access.WRITE_ONLY)
     private String displayName;
 
     /**
      * The current value of the metric.
      */
-    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    @JsonProperty(value = "currentValue", access = JsonProperty.Access.WRITE_ONLY)
     private Double currentValue;
 
     /**
      * The current limit of the metric.
      */
-    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    @JsonProperty(value = "limit", access = JsonProperty.Access.WRITE_ONLY)
     private Double limit;
 
     /**
      * The units of the metric.
      */
-    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    @JsonProperty(value = "unit", access = JsonProperty.Access.WRITE_ONLY)
     private String unit;
 
     /**
      * The next reset time for the metric (ISO8601 format).
      */
-    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    @JsonProperty(value = "nextResetTime", access = JsonProperty.Access.WRITE_ONLY)
     private DateTime nextResetTime;
 
     /**

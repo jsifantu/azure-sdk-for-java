@@ -7,13 +7,16 @@
 package com.microsoft.azure.management.keyvault.implementation;
 
 import com.microsoft.azure.AzureEnvironment;
-import com.microsoft.azure.RestClient;
+import com.microsoft.azure.AzureResponseBuilder;
 import com.microsoft.azure.credentials.AzureTokenCredentials;
 import com.microsoft.azure.management.graphrbac.implementation.GraphRbacManager;
 import com.microsoft.azure.management.keyvault.Vaults;
 import com.microsoft.azure.management.resources.fluentcore.arm.AzureConfigurable;
 import com.microsoft.azure.management.resources.fluentcore.arm.implementation.AzureConfigurableImpl;
 import com.microsoft.azure.management.resources.fluentcore.arm.implementation.Manager;
+import com.microsoft.azure.management.resources.fluentcore.utils.ProviderRegistrationInterceptor;
+import com.microsoft.azure.serializer.AzureJacksonAdapter;
+import com.microsoft.rest.RestClient;
 
 /**
  * Entry point to Azure storage resource management.
@@ -43,10 +46,13 @@ public final class KeyVaultManager extends Manager<KeyVaultManager, KeyVaultMana
      * @return the StorageManager
      */
     public static KeyVaultManager authenticate(AzureTokenCredentials credentials, String subscriptionId) {
-        return new KeyVaultManager(credentials.getEnvironment()
-                .newRestClientBuilder()
+        return new KeyVaultManager(new RestClient.Builder()
+                .withBaseUrl(credentials.environment(), AzureEnvironment.Endpoint.RESOURCE_MANAGER)
                 .withCredentials(credentials)
-                .build(), credentials.getDomain(), subscriptionId);
+                .withSerializerAdapter(new AzureJacksonAdapter())
+                .withResponseBuilderFactory(new AzureResponseBuilder.Factory())
+                .withInterceptor(new ProviderRegistrationInterceptor(credentials))
+                .build(), credentials.domain(), subscriptionId);
     }
 
     /**
@@ -92,13 +98,7 @@ public final class KeyVaultManager extends Manager<KeyVaultManager, KeyVaultMana
                 restClient,
                 subscriptionId,
                 new KeyVaultManagementClientImpl(restClient).withSubscriptionId(subscriptionId));
-        String graphEndpoint = AzureEnvironment.AZURE.getGraphEndpoint();
-        if (restClient.credentials() instanceof AzureTokenCredentials) {
-            graphEndpoint = ((AzureTokenCredentials) restClient.credentials()).getEnvironment().getGraphEndpoint();
-        }
-        graphRbacManager = GraphRbacManager.authenticate(restClient.newBuilder()
-                .withBaseUrl(graphEndpoint)
-                .build(), tenantId);
+        graphRbacManager = GraphRbacManager.authenticate(restClient, tenantId);
         this.tenantId = tenantId;
     }
 
@@ -108,7 +108,6 @@ public final class KeyVaultManager extends Manager<KeyVaultManager, KeyVaultMana
     public Vaults vaults() {
         if (vaults == null) {
             vaults = new VaultsImpl(
-                    super.innerManagementClient.vaults(),
                     this,
                     graphRbacManager,
                     tenantId);

@@ -7,12 +7,14 @@
 package com.microsoft.azure.management.resources;
 
 import com.microsoft.azure.management.apigeneration.Fluent;
+import com.microsoft.azure.management.resources.fluentcore.arm.models.HasId;
 import com.microsoft.azure.management.resources.fluentcore.arm.models.HasName;
 import com.microsoft.azure.management.resources.fluentcore.model.Appliable;
 import com.microsoft.azure.management.resources.fluentcore.model.Creatable;
+import com.microsoft.azure.management.resources.fluentcore.model.Indexable;
 import com.microsoft.azure.management.resources.fluentcore.model.Refreshable;
 import com.microsoft.azure.management.resources.fluentcore.model.Updatable;
-import com.microsoft.azure.management.resources.fluentcore.model.Wrapper;
+import com.microsoft.azure.management.resources.fluentcore.model.HasInner;
 import com.microsoft.azure.management.resources.implementation.PolicyDefinitionInner;
 
 /**
@@ -21,9 +23,11 @@ import com.microsoft.azure.management.resources.implementation.PolicyDefinitionI
 @Fluent
 public interface PolicyDefinition extends
         HasName,
+        HasId,
+        Indexable,
         Refreshable<PolicyDefinition>,
         Updatable<PolicyDefinition.Update>,
-        Wrapper<PolicyDefinitionInner> {
+        HasInner<PolicyDefinitionInner> {
 
     /**
      * @return the type of the policy definition
@@ -44,11 +48,6 @@ public interface PolicyDefinition extends
      * @return the policy rule
      */
     Object policyRule();
-
-    /**
-     * @return the Id of the policy definition
-     */
-    String id();
 
     /**
      * Container interface for all the definitions that need to be implemented.
